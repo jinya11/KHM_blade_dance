@@ -16,7 +16,7 @@ function updateSwords(dt){
   for(const s of swords){
     s.life += dt; s.x += s.vx*dt; s.y += s.vy*dt;
     for(const e of enemies){
-      if(!e.alive || s.hitSet.has(e)) continue;
+      if(!e.alive || s.hitSet.has(e) || e.hidden) continue;
       if(dist(s.x,s.y,e.x,e.y) > e.r + SWORD_R) continue;
       s.hitSet.add(e);
       if(e.key === "boss"){ hitBoss(e, BOSS_ULT_DMG); continue; }
@@ -43,7 +43,7 @@ function galeLine(){
   sfx.ult();
   slashes.push({x:0, y, a:0, len:W, life:0, dur:.35, ult:true});
   for(const e of enemies){
-    if(!e.alive || Math.abs(e.y - y) > GALE_LINE_THICK + e.r) continue;
+    if(!e.alive || e.hidden || Math.abs(e.y - y) > GALE_LINE_THICK + e.r) continue;
     if(e.key === "boss"){ hitBoss(e, BOSS_ULT_DMG); continue; }
     if(e.key === "guardian") addText(e.x, e.y-e.r-10, "약점!", "#E8B84B", 19);
     killEnemy(e, true, true);
@@ -53,7 +53,7 @@ function galeNuke(){
   shake = Math.max(shake, 20); flash = Math.max(flash, .7);
   sfx.ult(); sfx.boom();
   for(const e of enemies){
-    if(!e.alive) continue;
+    if(!e.alive || e.hidden) continue;
     if(e.key === "boss"){ hitBoss(e, BOSS_ULT_DMG); continue; }
     if(e.key === "guardian" && !e.guardDisarmed){
       e.guardDisarmed = true; e.stagger = GALE_GUARD_STUN;

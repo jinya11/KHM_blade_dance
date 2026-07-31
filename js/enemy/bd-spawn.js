@@ -2,9 +2,11 @@
 // 적 스폰 — 경과 시간대별 적 종류 추첨, 화면 밖 스폰 위치 선정, 스폰 주기/최대 마릿수 계산.
 function pickType(){
   const p = t/ROUND_TIME;
-  if(p < .2)  return weightedPick({slime:60, swift:22, gunner:18});
-  if(p < .48) return weightedPick({slime:32, swift:20, guardian:14, bomber:12, gunner:14, healer:8});
-  return weightedPick({slime:22, swift:18, guardian:17, bomber:15, gunner:16, healer:12});
+  const weights = p < .2  ? {slime:60, swift:22, gunner:18}
+                : p < .48 ? {slime:32, swift:20, guardian:14, bomber:12, gunner:14, healer:8}
+                :           {slime:22, swift:18, guardian:17, bomber:15, gunner:16, healer:12};
+  if(enemies.reduce((n,o)=>n+(o.alive&&o.key==="gunner"?1:0),0) >= GUNNER_MAX_ALIVE) delete weights.gunner;
+  return weightedPick(weights);
 }
 function spawn(){
   const key = pickType(), d = TYPES[key];
@@ -16,10 +18,17 @@ function spawn(){
     else if(side===2){x=rnd(m,W-m); y=H+20;}
     else {x=-20; y=rnd(m,H-m);}
   } while(dist(x,y,player.x,player.y) < 150 && ++guard < 12);
+  let evo = false;
+  if(evoTarget[key] > 0){
+    const evoAlive = enemies.reduce((n,o)=>n + (o.alive && o.key===key && o.evo ? 1 : 0), 0);
+    evo = evoAlive < evoTarget[key];
+  }
   enemies.push({key, x, y, r:d.r, spd:d.spd*rnd(.9,1.12), score:d.score, color:d.color,
                 alive:true, facing:Math.atan2(player.y-y,player.x-x), atk:.8, born:0,
                 stagger:0, wob:rnd(0,6.28), kb:0, kx:0, ky:0,
-                shotCd:rnd(.5,1.1), guardDisarmed:false});
+                shotCd:rnd(.5,1.1), guardDisarmed:false,
+                evo, chargeCd:rnd(.3,EVO_SLIME_INTERVAL), charging:false, chargeA:0,
+                slamCd:rnd(.5,EVO_GUARDIAN_CD), slamWind:0});
 }
 // 넓은(가로형) 화면일수록 같은 밀도를 유지하도록 기준 해상도(800x600) 대비 면적으로 보정
 function arenaAreaScale(){ return (W*H) / (800*600); }

@@ -65,7 +65,7 @@ function dashHits(px,py,nx,ny){
   if(dashHitsCage(nx,ny)){ endDash(false); return true; } // 감금 벽: 벽만 깎이고 플레이어는 피해 없음
   const R = player.ult ? HIT_R_ULT : HIT_R;
   for(const e of enemies){
-    if(!e.alive || player.hitSet.has(e)) continue;
+    if(!e.alive || player.hitSet.has(e) || e.hidden) continue;
     if(segDist(px,py,nx,ny,e.x,e.y) > e.r + R) continue;
     player.hitSet.add(e);
     if(e.key === "boss"){ hitBoss(e, player.ult ? BOSS_ULT_DMG : BOSS_HIT_DMG); continue; }

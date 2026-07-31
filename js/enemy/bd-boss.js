@@ -10,7 +10,7 @@ function spawnBoss(){
   const type = BOSS_TYPES[key], s = type.stats;
   const x = W/2, y = -70;
   const boss = {key:"boss", type:key, x, y, r:s.r, spd:s.spd, hp:s.hp, maxHp:s.hp, score:0, color:s.color,
-                alive:true, facing:Math.atan2(player.y-y,player.x-x), atk:.8, born:0, stagger:0, wob:0, kb:0, kx:0, ky:0};
+                alive:true, facing:Math.atan2(player.y-y,player.x-x), atk:.8, born:0, stagger:0, wob:0, kb:0, kx:0, ky:0, hidden:false};
   enemies.push(boss);
   shake = Math.max(shake, 14); flash = Math.max(flash, .4);
   sfx.boom();
@@ -47,6 +47,7 @@ function killBoss(e){
   sfx.boom();
   const type = BOSS_TYPES[e.type];
   if(type && type.onKilled) type.onKilled(e);
+  evoTarget[EVO_CATEGORIES[Math.floor(Math.random()*EVO_CATEGORIES.length)]]++;
   charges = Math.min(MAX_CHARGE, charges + BOSS_CHARGE_BONUS);
   score += BOSS_SCORE_BONUS;
   flash = Math.max(flash, .5);

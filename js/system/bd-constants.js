@@ -54,6 +54,19 @@ const BOSS_CHARGE_BONUS = 3;     // 무한 모드: 처치 시 추가 질풍검 �
 const BOSS_INTERVAL_MIN = 40; // 무한 모드: 다음 보스까지 최소 대기(초)
 const BOSS_INTERVAL_MAX = 90; // 최대 대기(초)
 
+// 무한 모드 진화 — 보스 처치마다 세 범주(먹덩이/저격수/방패병) 중 하나가 랜덤으로 1마리씩 누적된다(체력 강화 없음)
+const EVO_CATEGORIES = ["slime","gunner","guardian"];
+const EVO_SLIME_RANGE = 260;    // 이 거리 안이면 돌진 시도
+const EVO_SLIME_CHANCE = 0.3;   // 판정 주기마다 돌진할 확률
+const EVO_SLIME_INTERVAL = 1.2; // 돌진 판정 주기(초)
+const EVO_SLIME_SPEED_MULT = 6; // 돌진 중 속도 배율
+const EVO_SLIME_DUR = 0.6;      // 돌진 지속(초)
+const EVO_GUNNER_TURN = 2.2;    // 커브탄 초당 회전량(rad/s)
+const EVO_GUARDIAN_RANGE = 60;  // 내려찍기 사거리(방패병 반경 기준 가산)
+const EVO_GUARDIAN_WIND = 0.5;  // 내려찍기 예비동작(초)
+const EVO_GUARDIAN_CD = 3.0;    // 내려찍기 재사용 대기(초)
+const GUNNER_MAX_ALIVE = 10;    // 저격수 동시 생존 마릿수 상한
+
 const TYPES = {
   slime:    {r:19, spd:47,  score:100, color:"#7C8AA8", name:"먹덩이"},
   swift:    {r:14, spd:146, score:210, color:"#E0453A", name:"질풍조"},

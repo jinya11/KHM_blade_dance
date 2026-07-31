@@ -89,6 +89,19 @@ function draw(){
       ctx.beginPath(); ctx.arc(-R*.28,-R*.15,2.6,0,6.283); ctx.arc(R*.28,-R*.15,2.6,0,6.283); ctx.fill();
     }
     ctx.restore(); ctx.globalAlpha = 1;
+    if(e.evo){
+      // 진화개체 표식 — 회전 영향 없는 고정 X 마크
+      ctx.save(); ctx.translate(e.x, e.y-e.r-14);
+      ctx.strokeStyle = "#E8B84B"; ctx.lineWidth = 3; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(-5,-5); ctx.lineTo(5,5); ctx.moveTo(5,-5); ctx.lineTo(-5,5); ctx.stroke();
+      ctx.restore();
+    }
+    if(e.key === "guardian" && e.slamWind > 0){
+      // 내려찍기 예비동작 경고 — 실제 타격 범위를 처음부터 고정으로 보여주고 점멸
+      const pulse = .55 + .35*Math.sin(e.slamWind*22);
+      ctx.strokeStyle = "rgba(224,69,58,"+pulse.toFixed(2)+")"; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.r+PLAYER_R+EVO_GUARDIAN_RANGE, 0, 6.283); ctx.stroke();
+    }
   }
 
   drawHazards();

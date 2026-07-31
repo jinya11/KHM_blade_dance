@@ -3,7 +3,7 @@
 
 function fireBullet(e){
   const a = Math.atan2(player.y-e.y, player.x-e.x);
-  bullets.push({x:e.x, y:e.y, vx:Math.cos(a)*BULLET_SPEED, vy:Math.sin(a)*BULLET_SPEED, life:0, dur:1.8});
+  bullets.push({x:e.x, y:e.y, vx:Math.cos(a)*BULLET_SPEED, vy:Math.sin(a)*BULLET_SPEED, life:0, dur:1.8, curve:e.evo});
   sfx.shot();
 }
 function dropHeal(x,y){
@@ -13,7 +13,15 @@ function dropHeal(x,y){
 /** true를 반환하면 계속 진행, false면 이번 프레임에 라운드가 끝났다는 뜻(update()가 즉시 return해야 함). */
 function updateHazards(dt){
   // 탄환: 이동 + 피격 판정
-  for(const b of bullets){ b.life += dt; b.x += b.vx*dt; b.y += b.vy*dt; }
+  for(const b of bullets){
+    if(b.curve && !b.reflected){
+      const cur = Math.atan2(b.vy,b.vx), tgt = Math.atan2(player.y-b.y, player.x-b.x);
+      const na = cur + clamp(angDiff(tgt,cur), -EVO_GUNNER_TURN*dt, EVO_GUNNER_TURN*dt);
+      const sp = Math.hypot(b.vx,b.vy);
+      b.vx = Math.cos(na)*sp; b.vy = Math.sin(na)*sp;
+    }
+    b.life += dt; b.x += b.vx*dt; b.y += b.vy*dt;
+  }
   // 반사된 탄환(이전 프레임에 반사됨): 적 피격 판정 — 반사 판정보다 먼저 처리해 반사 즉시 소모되지 않게 한다
   for(const b of bullets){
     if(!b.reflected || b.life >= b.dur) continue;

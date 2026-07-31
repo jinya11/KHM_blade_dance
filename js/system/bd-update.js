@@ -80,13 +80,47 @@ function update(dt){
       e.facing += clamp(d, -turn, turn);
     } else e.facing = a;
 
+    // 진화: 먹덩이 — 확률적으로 사거리 안에서 짧게 고속 돌진
+    if(e.key === "slime" && e.evo){
+      if(e.charging){
+        e.chargeCd -= dt;
+        if(e.chargeCd <= 0){ e.charging = false; e.chargeCd = EVO_SLIME_INTERVAL*rnd(.8,1.2); }
+      } else {
+        e.chargeCd -= dt;
+        if(e.chargeCd <= 0){
+          if(dist(player.x,player.y,e.x,e.y) < EVO_SLIME_RANGE && Math.random() < EVO_SLIME_CHANCE){
+            e.charging = true; e.chargeA = a; e.chargeCd = EVO_SLIME_DUR;
+          } else e.chargeCd = EVO_SLIME_INTERVAL*rnd(.8,1.2);
+        }
+      }
+    }
+    // 진화: 방패병 — 사거리 안이면 예비동작 후 정면 여부와 무관하게 내려찍기
+    if(e.key === "guardian" && e.evo){
+      if(e.slamWind > 0){
+        e.slamWind -= dt;
+        if(e.slamWind <= 0){
+          e.slamWind = 0;
+          if(!player.dashing && player.invuln <= 0 && dist(player.x,player.y,e.x,e.y) < e.r+PLAYER_R+EVO_GUARDIAN_RANGE) damagePlayer();
+          e.slamCd = EVO_GUARDIAN_CD;
+        }
+      } else {
+        e.slamCd -= dt;
+        if(e.slamCd <= 0 && dist(player.x,player.y,e.x,e.y) < e.r+PLAYER_R+EVO_GUARDIAN_RANGE){
+          e.slamWind = EVO_GUARDIAN_WIND;
+          addText(e.x, e.y-e.r-10, "내려찍기!", "#E0453A", 18);
+        }
+      }
+    }
+
     let sp = e.spd * (e.stagger>0 ? .25 : 1);
     if(e.born < .3) sp *= .25;
     if(e.key === "gunner" && dist(player.x,player.y,e.x,e.y) < GUNNER_RANGE*.55) sp = 0; // 사거리 안이면 멈춰서 사격
+    if(e.key === "guardian" && e.slamWind > 0) sp = 0; // 내려찍기 예비동작 중엔 정지
     e.wob += dt*4;
-    const wob = e.key==="swift" ? Math.sin(e.wob)*.5 : 0;
-    e.x += Math.cos(a+wob)*sp*dt + e.kx*e.kb*dt;
-    e.y += Math.sin(a+wob)*sp*dt + e.ky*e.kb*dt;
+    let moveA = a, wob = e.key==="swift" ? Math.sin(e.wob)*.5 : 0;
+    if(e.key === "slime" && e.evo && e.charging){ sp = e.spd*EVO_SLIME_SPEED_MULT; moveA = e.chargeA; wob = 0; }
+    e.x += Math.cos(moveA+wob)*sp*dt + e.kx*e.kb*dt;
+    e.y += Math.sin(moveA+wob)*sp*dt + e.ky*e.kb*dt;
     e.kb = Math.max(0, e.kb - dt*900);
     e.x = clamp(e.x, -40, W+40); e.y = clamp(e.y, -40, H+40);
 
