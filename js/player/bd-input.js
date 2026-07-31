@@ -1,5 +1,7 @@
 "use strict";
 // 입력 처리 — 마우스/터치 좌표 해석, 대시 대상(적 or 빈 공간) 탐색, 대시 시작(startDash).
+let mouseX = W/2, mouseY = H/2; // 마우스 추적 이동(update)이 참조하는 최신 포인터 좌표
+cv.addEventListener("mousemove", e=>{ const p = pointerAt(e); mouseX = p.x; mouseY = p.y; });
 function pointerAt(e){
   const r = cv.getBoundingClientRect();
   const p = (e.touches && e.touches[0]) ? e.touches[0] : e;
@@ -26,13 +28,16 @@ function onPress(e){
   }
   const best = findNearestEnemy(p);
   if(best){ startDash(best.x, best.y, best); return; }
-  // 빈 공간: 거리 제한 없이 클릭한 지점까지 자유 이동 — 처치 없이 계속하면 기력이 가중치를 받으며 소모된다
+  // 빈 공간: 클릭한 지점까지 자유 이동(최대 사거리 제한) — 처치 없이 계속하면 기력이 가중치를 받으며 소모된다
+  const d = dist(player.x, player.y, p.x, p.y);
+  const k = Math.min(1, MAX_DASH_RANGE/Math.max(1,d));
+  const tx = player.x + (p.x-player.x)*k, ty = player.y + (p.y-player.y)*k;
   const cost = STAMINA_COST_BASE + evadeStreak*STAMINA_COST_STEP;
   evadeStreak++;
   stamina = Math.max(0, stamina - cost);
   if(stamina <= 0) staminaLock = STAMINA_LOCK_TIME;
   syncHud();
-  startDash(p.x, p.y, null);
+  startDash(tx, ty, null);
 }
 /** 마우스 휠 클릭: 질풍참 발동. 스택 수(1/2/3)에 따라 효과가 다르다. */
 function onWheelPress(e){

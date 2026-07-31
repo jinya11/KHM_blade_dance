@@ -31,6 +31,8 @@ const STAMINA_LOCK_TIME  = 0.5;  // 기력 완전 소진 시 이동 불가 시�
 const STAMINA_LOCK_RECOVER = 0.3; // 이동 불가 해제 시 회복되는 비율
 const STAMINA_IDLE_DELAY = 0.8;  // 이 시간 이상 가만히 있으면 기력 자동 회복 시작
 const STAMINA_REGEN_PER_SEC = 15; // 정지 상태일 때 초당 기력 회복량
+const FOLLOW_SPEED = 220;    // 대시 중이 아닐 때 마우스 방향으로 자동 이동하는 속도(px/s)
+const MAX_DASH_RANGE = 420;  // 빈 공간 대시(자유 이동)가 갈 수 있는 최대 거리
 
 // 저격수(gunner) — 사거리 안이면 멈춰서 직선 탄환 발사
 const GUNNER_RANGE    = 1000;

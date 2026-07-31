@@ -34,6 +34,17 @@ function update(dt){
     }
   }
 
+  // 마우스 추적 이동 — 대시 중이 아니고 기력 잠금이 아닐 때 커서 방향으로 저속 이동
+  if(!player.dashing && staminaLock <= 0){
+    const d = dist(player.x, player.y, mouseX, mouseY);
+    if(d > 2){
+      const k = Math.min(1, FOLLOW_SPEED*dt/d);
+      player.x = clamp(player.x + (mouseX-player.x)*k, PLAYER_R, W-PLAYER_R);
+      player.y = clamp(player.y + (mouseY-player.y)*k, PLAYER_R, H-PLAYER_R);
+      player.facing = Math.atan2(mouseY-player.y, mouseX-player.x);
+    }
+  }
+
   // 연격 유지 타이머 (돌진 중에는 멈춤)
   if(combo > 0 && !player.dashing){
     comboTimer -= dt;

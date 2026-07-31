@@ -1,5 +1,11 @@
 "use strict";
 // 렌더링 — 배경·검격 잔상·적·파티클·플레이어·떠오르는 숫자를 매 프레임 캔버스에 그린다(draw). 상태를 바꾸지 않고 읽기만 한다.
+// 기력 잔량에 따라 흰색(가득)에서 빨강(고갈)으로 변하는 플레이어 색상
+function staminaColor(){
+  const k = clamp(stamina/MAX_STAMINA, 0, 1);
+  const r = Math.round(0xE0 + (0xDC-0xE0)*k), g = Math.round(0x45 + (0xE9-0x45)*k), b = Math.round(0x3A + (0xF2-0x3A)*k);
+  return {fill:`rgb(${r},${g},${b})`, shadow:`rgba(${r},${g},${b},.65)`};
+}
 function draw(){
   ctx.clearRect(0,0,W,H);
   const sx = shake ? rnd(-shake,shake)*.4 : 0, sy = shake ? rnd(-shake,shake)*.4 : 0;
@@ -155,8 +161,9 @@ function draw(){
     }
     ctx.globalAlpha = blink ? .35 : 1;
     ctx.rotate(player.facing);
-    ctx.fillStyle = charges>=MAX_CHARGE ? "#E8B84B" : "#DCE9F2";
-    ctx.shadowColor = charges>=MAX_CHARGE ? "rgba(232,184,75,.8)" : "rgba(220,233,242,.65)";
+    const sc = staminaColor();
+    ctx.fillStyle = charges>=MAX_CHARGE ? "#E8B84B" : sc.fill;
+    ctx.shadowColor = charges>=MAX_CHARGE ? "rgba(232,184,75,.8)" : sc.shadow;
     ctx.shadowBlur = 18;
     ctx.beginPath();
     ctx.moveTo(PLAYER_R*1.45,0); ctx.lineTo(-PLAYER_R*.75, PLAYER_R*.8);
