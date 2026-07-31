@@ -37,6 +37,7 @@ const GUNNER_RANGE    = 1000;
 const GUNNER_COOLDOWN = 2.0;
 const BULLET_SPEED    = 420;
 const BULLET_R        = 6;
+const DASH_PARRY_CHANCE = 0.3; // 돌진 중 탄환 피격 시 패링(무피해) 확률
 
 // 회복충(healer) — 처치 시 회복 아이템 드롭
 const HEAL_LIFE = 7;
@@ -46,6 +47,7 @@ const HEAL_R    = 20;
 // 보스별 스탯·패턴은 bd-boss-*.js에서 BOSS_TYPES에 등록한다(여긴 모드 공통 수치만).
 const BOSS_HIT_DMG   = 1;   // 일반 히트당 피해
 const BOSS_ULT_DMG   = 3;   // 질풍검 히트당 피해
+const BOSS_HIT_STAMINA_RESTORE = 10; // 보스 타격 1회당 기력 회복량
 const BOSS_SCORE_BONUS  = 50000; // 무한 모드: 처치 시 추가 점수
 const BOSS_CHARGE_BONUS = 3;     // 무한 모드: 처치 시 추가 질풍검 충전
 const BOSS_INTERVAL_MIN = 40; // 무한 모드: 다음 보스까지 최소 대기(초)

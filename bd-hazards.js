@@ -14,11 +14,17 @@ function dropHeal(x,y){
 function updateHazards(dt){
   // 탄환: 이동 + 피격 판정
   for(const b of bullets){ b.life += dt; b.x += b.vx*dt; b.y += b.vy*dt; }
-  if(!player.dashing && player.invuln <= 0){
+  if(player.invuln <= 0){
     for(const b of bullets){
       if(b.life < b.dur && dist(b.x,b.y,player.x,player.y) < PLAYER_R + BULLET_R){
         b.life = b.dur;
-        damagePlayer();
+        if(player.dashing && Math.random() < DASH_PARRY_CHANCE){
+          addText(player.x, player.y-40, "패링!", "#8B5FBF", 20);
+          burst(player.x, player.y, "#8B5FBF", 8, 220);
+          sfx.block();
+        } else {
+          damagePlayer();
+        }
         break; // 한 프레임에 한 발만 적용
       }
     }

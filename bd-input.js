@@ -22,7 +22,7 @@ function onPress(e){
   if(player.cd > 0){
     if(player.quickRecover <= 0) return;
     player.cd = 0; player.quickRecover = 0; // 방패 막힘 직후 빠른 재입력 — 페널티 없이 재돌진
-    addText(player.x, player.y-40, "쾌속!", "#DCE9F2", 19);
+    addText(player.x, player.y-40, "파훼!", "#DCE9F2", 19);
   }
   const best = findNearestEnemy(p);
   if(best){ startDash(best.x, best.y, best); return; }

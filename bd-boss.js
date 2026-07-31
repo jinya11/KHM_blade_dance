@@ -29,11 +29,12 @@ function hitBoss(e, dmg){
   e.atk = Math.max(e.atk, 0.5); // 피격 시 0.5초간 공격 불가(패턴별 조건)
   bossNoAttack = Math.max(bossNoAttack, 0.5); // 피격 시 0.5초간 어떤 공격도 실제로 적용되지 않음(공통 안전장치)
   player.killed = true; // 명중 시 쿨타임 즉시 초기화 — 보스도 예외 없이 매 타격마다 적용
+  stamina = Math.min(MAX_STAMINA, stamina + BOSS_HIT_STAMINA_RESTORE);
   comboTimer = COMBO_WINDOW;
   shake = Math.max(shake, 5);
   burst(e.x, e.y, e.color, 6, 200);
   addText(e.x, e.y-e.r-10, "-"+dmg, "#EDE4D3", 16);
-  syncBossHp(e);
+  syncBossHp(e); syncHud();
   if(e.hp <= 0) killBoss(e);
 }
 function killBoss(e){
