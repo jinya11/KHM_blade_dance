@@ -38,6 +38,7 @@ const GUNNER_COOLDOWN = 2.0;
 const BULLET_SPEED    = 420;
 const BULLET_R        = 6;
 const DASH_PARRY_CHANCE = 0.3; // 돌진 중 탄환 피격 시 패링(무피해) 확률
+const DASH_BULLET_R_MULT = 0.5; // 돌진 중 탄환 피격 판정 반경 배율(체감 완화)
 
 // 회복충(healer) — 처치 시 회복 아이템 드롭
 const HEAL_LIFE = 7;

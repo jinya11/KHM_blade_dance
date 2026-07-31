@@ -14,9 +14,21 @@ function dropHeal(x,y){
 function updateHazards(dt){
   // 탄환: 이동 + 피격 판정
   for(const b of bullets){ b.life += dt; b.x += b.vx*dt; b.y += b.vy*dt; }
+  // 반사된 탄환(이전 프레임에 반사됨): 적 피격 판정 — 반사 판정보다 먼저 처리해 반사 즉시 소모되지 않게 한다
+  for(const b of bullets){
+    if(!b.reflected || b.life >= b.dur) continue;
+    for(const o of enemies){
+      if(!o.alive || dist(b.x,b.y,o.x,o.y) >= o.r + BULLET_R) continue;
+      b.life = b.dur;
+      addText(o.x, o.y-o.r-10, "자멸", "#E8B84B", 19);
+      if(o.key === "boss") hitBoss(o, BOSS_HIT_DMG); else killEnemy(o, true);
+      break;
+    }
+  }
   if(player.invuln <= 0){
     for(const b of bullets){
-      if(b.reflected || b.life >= b.dur || dist(b.x,b.y,player.x,player.y) >= PLAYER_R + BULLET_R) continue;
+      const hitR = (player.dashing ? PLAYER_R*DASH_BULLET_R_MULT : PLAYER_R) + BULLET_R;
+      if(b.reflected || b.life >= b.dur || dist(b.x,b.y,player.x,player.y) >= hitR) continue;
       if(player.dashing && Math.random() < DASH_PARRY_CHANCE){
         b.vx = -b.vx; b.vy = -b.vy; b.reflected = true;
         addText(player.x, player.y-40, "패링!", "#8B5FBF", 20);
@@ -27,16 +39,6 @@ function updateHazards(dt){
         damagePlayer();
       }
       break; // 한 프레임에 한 발만 적용
-    }
-  }
-  // 반사된 탄환: 적 피격 판정
-  for(const b of bullets){
-    if(!b.reflected || b.life >= b.dur) continue;
-    for(const o of enemies){
-      if(!o.alive || dist(b.x,b.y,o.x,o.y) >= o.r + BULLET_R) continue;
-      b.life = b.dur;
-      if(o.key === "boss") hitBoss(o, BOSS_HIT_DMG); else killEnemy(o, true);
-      break;
     }
   }
   bullets = bullets.filter(b => b.life < b.dur && b.x > -40 && b.x < W+40 && b.y > -40 && b.y < H+40);
