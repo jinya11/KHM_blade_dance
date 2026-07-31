@@ -6,6 +6,78 @@ function staminaColor(){
   const r = Math.round(0xE0 + (0xDC-0xE0)*k), g = Math.round(0x45 + (0xE9-0x45)*k), b = Math.round(0x3A + (0xF2-0x3A)*k);
   return {fill:`rgb(${r},${g},${b})`, shadow:`rgba(${r},${g},${b},.65)`};
 }
+// 질풍참 바람 줄기 — 곡선으로 휘어지는 짙은 청색 리본, 중심에 밝은 코어를 겹쳐 그린다
+function drawWinds(){
+  for(const w of winds){
+    const k = 1 - w.life/w.dur; if(k <= 0) continue;
+    const fade = Math.sin(Math.min(1, w.life/w.dur) * Math.PI);
+    const ex = w.x + Math.cos(w.a)*w.len, ey = w.y + Math.sin(w.a)*w.len;
+    const nx = -Math.sin(w.a), ny = Math.cos(w.a), bow = w.len*.18;
+    const mx = (w.x+ex)/2 + nx*bow, my = (w.y+ey)/2 + ny*bow;
+    ctx.save(); ctx.globalAlpha = fade*.85; ctx.lineCap = "round";
+    ctx.strokeStyle = "#0D3B66"; ctx.lineWidth = 10*fade;
+    ctx.beginPath(); ctx.moveTo(w.x,w.y); ctx.quadraticCurveTo(mx,my,ex,ey); ctx.stroke();
+    ctx.strokeStyle = "#3FA9F5"; ctx.lineWidth = 5*fade;
+    ctx.shadowColor = "rgba(79,195,247,.9)"; ctx.shadowBlur = 14;
+    ctx.beginPath(); ctx.moveTo(w.x,w.y); ctx.quadraticCurveTo(mx,my,ex,ey); ctx.stroke();
+    ctx.strokeStyle = "#DFF6FF"; ctx.lineWidth = 1.6*fade; ctx.shadowBlur = 6;
+    ctx.beginPath(); ctx.moveTo(w.x,w.y); ctx.quadraticCurveTo(mx,my,ex,ey); ctx.stroke();
+    ctx.restore(); ctx.shadowBlur = 0;
+  }
+}
+// 귀환식 마킹 지점 — 펄스링 + 실제 내려찍기 판정 범위 + 순간이동까지 남은 시간을 나타내는 진행 링
+function drawRecallMark(){
+  if(!recallMark) return;
+  const k = 1 - recallMark.t/RECALL_DELAY;
+  ctx.save();
+  ctx.globalAlpha = .35 + .25*(1-k);
+  ctx.strokeStyle = "#39D97A"; ctx.lineWidth = 2; ctx.setLineDash([6,6]);
+  ctx.beginPath(); ctx.arc(recallMark.x, recallMark.y, RECALL_SLAM_R, 0, 6.283); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = .55 + .35*Math.sin(recallMark.t*10);
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(recallMark.x, recallMark.y, 16+6*Math.sin(recallMark.t*6), 0, 6.283); ctx.stroke();
+  ctx.globalAlpha = .8;
+  ctx.beginPath(); ctx.arc(recallMark.x, recallMark.y, 26, -1.5708, -1.5708+6.283*k); ctx.stroke();
+  ctx.restore();
+}
+// 흡풍식/광풍식 회오리 — 짙은 초록 바깥 겹 + 밝은 연두 코어를 겹쳐 그려 소용돌이치는 바람을 표현
+function drawVortices(){
+  for(const v of vortices){
+    const k = Math.max(0, 1 - v.life/v.dur);
+    ctx.save(); ctx.globalAlpha = k*.85; ctx.lineCap = "round";
+    for(let i=0;i<3;i++){
+      const rr = v.r * (0.35+i*0.25) * (v.mode === "pull" ? k : (1-k*.4));
+      const rot = v.life*(v.mode === "pull" ? 4 : -3) + i*2;
+      ctx.strokeStyle = "#0F5C33"; ctx.lineWidth = 7;
+      ctx.beginPath(); ctx.arc(v.x, v.y, rr, rot, rot+4.5); ctx.stroke();
+      ctx.strokeStyle = "#39D97A"; ctx.lineWidth = 3;
+      ctx.shadowColor = "rgba(57,217,122,.9)"; ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.arc(v.x, v.y, rr, rot, rot+4.5); ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+    ctx.restore();
+  }
+}
+// 스킬군 선택 원형 UI — 마우스 휠 클릭으로 열리며, 좌/우 반원이 질풍참/귀풍참에 대응한다
+function drawWheelUi(){
+  if(!wheelUiOpen) return;
+  const cx = player.x, cy = player.y, R = 90, hoverGale = mouseX < cx;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,6.283);
+  ctx.fillStyle = "rgba(10,11,17,.82)"; ctx.fill();
+  ctx.lineWidth = 2; ctx.strokeStyle = "rgba(220,233,242,.35)"; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R, Math.PI/2, Math.PI*1.5); ctx.closePath();
+  ctx.fillStyle = hoverGale ? "rgba(232,184,75,.3)" : "rgba(232,184,75,.08)"; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R, -Math.PI/2, Math.PI/2); ctx.closePath();
+  ctx.fillStyle = !hoverGale ? "rgba(79,195,247,.3)" : "rgba(79,195,247,.08)"; ctx.fill();
+  ctx.font = "bold 15px 'Nanum Myeongjo',serif"; ctx.textAlign = "center"; ctx.fillStyle = "#EDE4D3";
+  ctx.fillText("질풍참", cx-R*.5, cy+5);
+  ctx.fillText("귀풍참", cx+R*.5, cy+5);
+  ctx.strokeStyle = "#DFF6FF"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(cx,cy,R+8,-1.5708,-1.5708+6.283*(wheelUiTimer/WHEEL_UI_IDLE_CLOSE)); ctx.stroke();
+  ctx.restore();
+}
 function draw(){
   ctx.clearRect(0,0,W,H);
   const sx = shake ? rnd(-shake,shake)*.4 : 0, sy = shake ? rnd(-shake,shake)*.4 : 0;
@@ -28,7 +100,7 @@ function draw(){
     const k = 1 - s.life/s.dur;
     ctx.save(); ctx.translate(s.x,s.y); ctx.rotate(s.a);
     ctx.globalAlpha = k*.85;
-    ctx.fillStyle = s.ult ? "#E8B84B" : "#DCE9F2";
+    ctx.fillStyle = s.ult ? "#2F86D6" : "#DCE9F2";
     const h = (s.ult?16:7) * k;
     ctx.beginPath(); ctx.moveTo(0,-h); ctx.lineTo(s.len,0); ctx.lineTo(0,h); ctx.closePath(); ctx.fill();
     ctx.restore(); ctx.globalAlpha = 1;
@@ -130,6 +202,7 @@ function draw(){
   }
 
   drawHazards();
+  drawWinds();
   drawSwords();
   drawBossExtras();
 
@@ -170,14 +243,16 @@ function draw(){
     ctx.lineTo(-PLAYER_R*.2,0);  ctx.lineTo(-PLAYER_R*.75,-PLAYER_R*.8);
     ctx.closePath(); ctx.fill();
     ctx.restore(); ctx.globalAlpha = 1; ctx.shadowBlur = 0;
-    // 질풍참 스택 표시 — 쌓인 스택 수만큼 플레이어 옆에 소형 검이 추가된다
+    // 스택 표시 — 쌓인 스택 수만큼 플레이어 옆에 소형 검이 추가된다(선택된 스킬군 색상을 따른다)
     for(let i=0;i<charges;i++){
       ctx.save(); ctx.translate(player.x+PLAYER_R+11, player.y-PLAYER_R-5-i*14); ctx.rotate(-.6);
-      ctx.fillStyle = "#E8B84B";
+      ctx.fillStyle = skillFamily === "gale" ? "#2F86D6" : "#39D97A";
       ctx.fillRect(-1.4,-9,2.8,13); ctx.fillRect(-4.5,3,9,2.6);
       ctx.beginPath(); ctx.moveTo(-1.4,-9); ctx.lineTo(1.4,-9); ctx.lineTo(0,-13); ctx.closePath(); ctx.fill();
       ctx.restore();
     }
+    drawVortices();
+    drawRecallMark();
   }
 
   // 떠오르는 숫자
@@ -190,5 +265,6 @@ function draw(){
     ctx.fillText(x.s, x.x, x.y);
     ctx.globalAlpha = 1;
   }
+  drawWheelUi();
   ctx.restore();
 }

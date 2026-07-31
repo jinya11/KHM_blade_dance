@@ -6,12 +6,13 @@ let t = 0, timeLeft = ROUND_TIME;
 let score = 0, combo = 0, maxCombo = 0, kills = 0, dashCount = 0, hitDashes = 0;
 let charges = 0, comboTimer = 0, shake = 0, slowmo = 0, flash = 0, paused = false;
 const player = {x:0,y:0,hp:MAX_HP,invuln:0,cd:0,dashing:false,t:0,dur:0,fx:0,fy:0,tx:0,ty:0,dx:1,dy:0,
-                killed:false, isReposition:false, ult:false, facing:0, hitSet:null, quickRecover:0};
+                killed:false, isReposition:false, ult:false, facing:0, hitSet:null, quickRecover:0, blocked:false};
 let enemies = [], parts = [], texts = [], slashes = [], trail = [];
 let bullets = [], heals = []; // 저격수 탄환 · 회복충 드롭
 let beams = []; // 충전병이 발사하는 가로 빔
 let chargerCd = 0; // 충전병 처치 후 재등장까지 남은 시간
 let swords = []; // 질풍참 1스택 검 투사체
+let winds = []; // 질풍참 발동 시 흩날리는 청색 바람 줄기
 let spawnTimer = 0;
 let bossActive = false, bossTimer = 0; // 무한 모드: 다음 보스 등장까지 남은 시간
 let bossZones = []; // 보스 패턴이 만드는 잔상 등 범용 위험지대(공통 시스템이 갱신/판정)
@@ -22,18 +23,27 @@ let idleTime = 0; // 대시하지 않고 가만히 있은 시간(기력 자동 �
 let evoTarget = {slime:0, gunner:0, guardian:0}; // 무한 모드: 누적되는 진화개체 목표 마릿수
 let evoTimer = 0; // 다음 시간 기반 진화 등장까지 남은 시간
 
+// 귀풍참 — 우클릭으로 발동되는 스킬군을 질풍참/귀풍참 중에서 고르는 시스템
+let skillFamily = "gale";  // "gale"(질풍참) | "kwi"(귀풍참) — 우클릭 시 어느 쪽이 나갈지
+let skillSwapCd = 0;       // 스킬군 전환 재사용 대기 남은 시간
+let wheelUiOpen = false, wheelUiTimer = 0; // 원형 선택 UI 표시 여부 · 자동 닫힘까지 남은 시간(실시간)
+let recallMark = null;     // 귀환식이 찍어둔 마킹 지점 {x,y,t}
+let vortices = [];         // 흡풍식/광풍식이 만드는 회오리
+
 function reset(){
   t = 0; timeLeft = ROUND_TIME;
   score = combo = maxCombo = kills = dashCount = hitDashes = 0;
   charges = 0; comboTimer = 0; shake = 0; slowmo = 0; flash = 0; paused = false;
   enemies = []; parts = []; texts = []; slashes = []; trail = [];
-  bullets = []; heals = []; swords = []; beams = []; chargerCd = 0;
+  bullets = []; heals = []; swords = []; beams = []; winds = []; chargerCd = 0;
   spawnTimer = .35;
   bossActive = false; bossTimer = rnd(BOSS_INTERVAL_MIN, BOSS_INTERVAL_MAX);
   bossZones = []; cage = null; bossNoAttack = 0;
   stamina = MAX_STAMINA; staminaLock = 0; evadeStreak = 0; idleTime = 0;
   evoTarget = {slime:0, gunner:0, guardian:0};
   evoTimer = rnd(EVO_TIME_MIN, EVO_TIME_MAX);
-  Object.assign(player,{x:W/2,y:H/2,hp:MAX_HP,invuln:0,cd:0,dashing:false,killed:false,isReposition:false,ult:false,facing:0,quickRecover:0});
+  skillFamily = "gale"; skillSwapCd = 0; wheelUiOpen = false; wheelUiTimer = 0;
+  recallMark = null; vortices = [];
+  Object.assign(player,{x:W/2,y:H/2,hp:MAX_HP,invuln:0,cd:0,dashing:false,killed:false,isReposition:false,ult:false,facing:0,quickRecover:0,blocked:false});
   syncHud();
 }

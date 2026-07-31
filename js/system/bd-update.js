@@ -1,6 +1,14 @@
 "use strict";
 // 매 프레임 갱신 — 타이머·대시 이동·적 AI/피격·겹침 해소·파티클 수명 등 게임 로직 전체가 여기 한 함수(update)에 모여 있다.
 function update(dt){
+  const realDt = dt;
+  if(skillSwapCd > 0) skillSwapCd = Math.max(0, skillSwapCd - realDt);
+  if(wheelUiOpen){
+    wheelUiTimer -= realDt;
+    if(wheelUiTimer <= 0) wheelUiOpen = false;
+    dt *= WHEEL_UI_SLOWMO; // 원형 UI가 떠 있는 동안 게임 진행 속도 감소
+  }
+  updateKwi(dt);
   t += dt;
   if(mode === "normal"){
     timeLeft -= dt;
@@ -18,7 +26,7 @@ function update(dt){
   shake = Math.max(0, shake - dt*34);
   flash = Math.max(0, flash - dt*2.4);
   if(player.invuln > 0) player.invuln -= dt;
-  if(player.cd > 0) player.cd = Math.max(0, player.cd - dt);
+  if(player.cd > 0){ player.cd = Math.max(0, player.cd - dt); if(player.cd <= 0) player.blocked = false; }
   if(player.quickRecover > 0) player.quickRecover = Math.max(0, player.quickRecover - dt);
   if(staminaLock > 0){
     staminaLock = Math.max(0, staminaLock - dt);
@@ -34,8 +42,8 @@ function update(dt){
     }
   }
 
-  // 마우스 추적 이동 — 대시 중이 아니고 기력 잠금이 아닐 때 커서 방향으로 저속 이동
-  if(!player.dashing && staminaLock <= 0){
+  // 마우스 추적 이동 — 대시 중이 아니고 기력 잠금·방패 피격 경직이 아니며 원형 UI가 닫혀 있을 때만 커서 방향으로 저속 이동
+  if(!player.dashing && staminaLock <= 0 && !player.blocked && !wheelUiOpen){
     const d = dist(player.x, player.y, mouseX, mouseY);
     if(d > 2){
       const k = Math.min(1, FOLLOW_SPEED*dt/d);
@@ -216,6 +224,8 @@ function update(dt){
   texts = texts.filter(x=>x.life < x.dur);
   for(const p of trail) p.life += dt;
   trail = trail.filter(p=>p.life < .28);
+  for(const w of winds) w.life += dt;
+  winds = winds.filter(w=>w.life < w.dur);
 
   syncTimer();
 }

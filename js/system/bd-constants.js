@@ -1,15 +1,15 @@
 "use strict";
 // 상수 · 순수 유틸리티 — 밸런스 수치(적 스탯, 대시 속도 등)와 rnd/clamp/dist/각도 계산처럼
 // 다른 모든 bd-*.js 파일이 전역으로 참조하는 값과 함수를 모아둔 파일. 가장 먼저 로드되어야 한다.
-const ROUND_TIME   = 75;      // 한 판 길이(초)
+const ROUND_TIME   = 75;      // 일반모드- 한 판 길이(초)
 const DASH_SPEED   = 1650;    // px/s
 const DASH_CD      = 0.70;    // 처치 실패 시 대시 쿨타임
 const BLOCK_CD     = 1.4;    // 방패에 막혔을 때 페널티 쿨타임
 const BLOCK_RECOVER_WINDOW = 0.1; // 막힌 직후 이 시간 안에 재입력하면 쿨타임 없이 재돌진(히든 시스템)
-const COMBO_WINDOW = 1.15;   // 이 시간 안에 다음 처치가 없으면 연격 종료
+const COMBO_WINDOW = 1.4;   // 이 시간 안에 다음 처치가 없으면 연격 종료
 const HIT_R        = 24;      // 돌진 궤적 판정 반경
 const HIT_R_ULT    = 92;      // 질풍검 판정 반경
-const CHARGE_STEP  = 15;      // 연격 15회마다 질풍검 1충전
+const CHARGE_STEP  = 12;      // 연격 12회마다 질풍검 1충전
 const MAX_CHARGE   = 3;
 // 질풍참 1스택 — 바라보는 방향으로 검 투사체 발사
 const SWORD_COUNT  = 5;
@@ -34,10 +34,19 @@ const STAMINA_REGEN_PER_SEC = 15; // 정지 상태일 때 초당 기력 회복�
 const FOLLOW_SPEED = 220;    // 대시 중이 아닐 때 마우스 방향으로 자동 이동하는 속도(px/s)
 const MAX_DASH_RANGE = 420;  // 빈 공간 대시(자유 이동)가 갈 수 있는 최대 거리
 
+// 귀풍참 — 질풍참과 충전(charges)을 공유하는 대체 스킬군. 마우스 휠 클릭으로 원형 UI를 열어 전환한다.
+const SKILL_SWAP_CD = 15;       // 스킬군 전환 재사용 대기(초)
+const WHEEL_UI_IDLE_CLOSE = 5;  // 원형 UI: 조작 없이 지나면 자동으로 닫히는 시간(초, 실시간 기준)
+const WHEEL_UI_SLOWMO = 0.5;    // 원형 UI가 떠 있는 동안 게임 진행 속도 배율
+const RECALL_DELAY = 5;         // 귀환식: 마킹 후 순간이동까지 대기(초)
+const RECALL_SLAM_R = 70;       // 귀환식 착지 내려찍기 판정 반경
+const VORTEX_PULL_R = 220, VORTEX_PULL_DUR = 2.2, VORTEX_PULL_SPEED = 160; // 흡풍식
+const VORTEX_PUSH_DUR = 1.6; // 광풍식 — 판정은 시전 즉시 전체 적용, 회오리는 시각 효과 지속시간만 담당
+
 // 저격수(gunner) — 사거리 안이면 멈춰서 직선 탄환 발사
 const GUNNER_RANGE    = 1000;
 const GUNNER_COOLDOWN = 2.0;
-const BULLET_SPEED    = 420;
+const BULLET_SPEED    = 320;
 const BULLET_R        = 6;
 const DASH_PARRY_CHANCE = 1.0; // 돌진 중 탄환 피격 시 패링(무피해) 확률 (임시 테스트용 100%)
 const DASH_BULLET_R_MULT = 0.5; // 돌진 중 탄환 피격 판정 반경 배율(체감 완화)

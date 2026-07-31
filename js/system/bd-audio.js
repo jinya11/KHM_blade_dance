@@ -11,9 +11,24 @@ function tone(freq, dur, type, vol, slideTo){
   g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + dur);
   o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + dur);
 }
+/** 백색 잡음을 대역통과 필터로 걸러 만드는 바람 소리. toFreq를 주면 필터 주파수가 그쪽으로 휩쓴다. */
+function noise(dur, vol, freq, toFreq){
+  const a = ac(); if(!a) return;
+  const buf = a.createBuffer(1, a.sampleRate*dur, a.sampleRate);
+  const data = buf.getChannelData(0);
+  for(let i=0;i<data.length;i++) data[i] = Math.random()*2-1;
+  const src = a.createBufferSource(); src.buffer = buf;
+  const filt = a.createBiquadFilter(); filt.type = "bandpass"; filt.frequency.value = freq;
+  if(toFreq) filt.frequency.exponentialRampToValueAtTime(toFreq, a.currentTime + dur);
+  const g = a.createGain(); g.gain.value = vol;
+  g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + dur);
+  src.connect(filt).connect(g).connect(a.destination); src.start(); src.stop(a.currentTime + dur);
+}
 const sfx = {
-  dash:  ()=>tone(680, .16, "triangle", .07, 240),
-  kill:  (n)=>tone(420 + Math.min(n,24)*38, .10, "square", .055, null),
+  dash:  ()=>noise(.14, .1, 2000, 500),
+  kill:  (n)=>{ noise(.09, .2, 3400); tone(1500 + Math.min(n,24)*30, .08, "triangle", .05, 650); },
+  galeKill: ()=>noise(.18, .09, 1800, 600), // 질풍검 처치 — 스쳐 지나가는 듯한 작은 바람 소리
+  kwiKill:  ()=>{ noise(.26, .16, 500, 2200); tone(300, .22, "sine", .06, 700); }, // 귀풍검 처치 — 모여드는 듯한 중간 크기 바람 소리
   ult:   ()=>{tone(180,.34,"sawtooth",.09,900); tone(1200,.22,"triangle",.05,300);},
   block: ()=>tone(120, .20, "sawtooth", .12, 60),
   hurt:  ()=>tone(210, .34, "sine", .14, 70),

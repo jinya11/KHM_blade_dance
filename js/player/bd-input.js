@@ -1,7 +1,10 @@
 "use strict";
 // 입력 처리 — 마우스/터치 좌표 해석, 대시 대상(적 or 빈 공간) 탐색, 대시 시작(startDash).
 let mouseX = W/2, mouseY = H/2; // 마우스 추적 이동(update)이 참조하는 최신 포인터 좌표
-cv.addEventListener("mousemove", e=>{ const p = pointerAt(e); mouseX = p.x; mouseY = p.y; });
+cv.addEventListener("mousemove", e=>{
+  const p = pointerAt(e); mouseX = p.x; mouseY = p.y;
+  if(wheelUiOpen) wheelUiTimer = WHEEL_UI_IDLE_CLOSE; // 원형 UI 조작(마우스 이동) 시 자동 닫힘 타이머 초기화
+});
 function pointerAt(e){
   const r = cv.getBoundingClientRect();
   const p = (e.touches && e.touches[0]) ? e.touches[0] : e;
@@ -17,13 +20,13 @@ function findNearestEnemy(p){
   return best;
 }
 function onPress(e){
-  if(state !== "play" || staminaLock > 0) return;
+  if(state !== "play" || staminaLock > 0 || wheelUiOpen) return;
   e.preventDefault();
   const p = pointerAt(e);
   if(player.dashing) return;
   if(player.cd > 0){
     if(player.quickRecover <= 0) return;
-    player.cd = 0; player.quickRecover = 0; // 방패 막힘 직후 빠른 재입력 — 페널티 없이 재돌진
+    player.cd = 0; player.quickRecover = 0; player.blocked = false; // 방패 막힘 직후 빠른 재입력 — 페널티 없이 재돌진
     addText(player.x, player.y-40, "파훼!", "#DCE9F2", 19);
   }
   const best = findNearestEnemy(p);
@@ -32,25 +35,51 @@ function onPress(e){
   const d = dist(player.x, player.y, p.x, p.y);
   const k = Math.min(1, MAX_DASH_RANGE/Math.max(1,d));
   const tx = player.x + (p.x-player.x)*k, ty = player.y + (p.y-player.y)*k;
-  const cost = STAMINA_COST_BASE + evadeStreak*STAMINA_COST_STEP;
-  evadeStreak++;
-  stamina = Math.max(0, stamina - cost);
-  if(stamina <= 0) staminaLock = STAMINA_LOCK_TIME;
-  syncHud();
+  if(charges < MAX_CHARGE){ // 질풍검 풀 충전 시 자유 이동은 기력 소모 없음(우클릭 전체 공격과의 선택지)
+    const cost = STAMINA_COST_BASE + evadeStreak*STAMINA_COST_STEP;
+    evadeStreak++;
+    stamina = Math.max(0, stamina - cost);
+    if(stamina <= 0) staminaLock = STAMINA_LOCK_TIME;
+    syncHud();
+  }
   startDash(tx, ty, null);
 }
-/** 마우스 휠 클릭: 질풍참 발동. 스택 수(1/2/3)에 따라 효과가 다르다. */
+/** 마우스 우클릭: 현재 선택된 스킬군(질풍참/귀풍참) 발동. 스택 수(1/2/3)에 따라 효과가 다르다. */
 function onWheelPress(e){
   e.preventDefault();
-  if(state !== "play" || paused || player.dashing || charges <= 0) return;
+  if(state !== "play" || paused || player.dashing || charges <= 0 || wheelUiOpen) return;
   const n = charges;
   charges = 0; syncHud();
-  if(n === 1) galeSwords();
-  else if(n === 2) galeLine();
-  else galeNuke();
+  if(skillFamily === "gale"){
+    if(n === 1) galeSwords();
+    else if(n === 2) galeLine();
+    else galeNuke();
+  } else {
+    if(n === 1) kwiRecall();
+    else if(n === 2) kwiPull();
+    else kwiPush();
+  }
 }
-cv.addEventListener("mousedown", e=>{ if(e.button === 1) onWheelPress(e); else if(e.button !== 2) onPress(e); });
+/** 마우스 휠(가운데) 클릭: 스킬군 선택용 원형 UI를 연다. 재사용 대기 중엔 무시. */
+function openWheelUi(){
+  if(state !== "play" || paused || skillSwapCd > 0 || wheelUiOpen) return;
+  wheelUiOpen = true; wheelUiTimer = WHEEL_UI_IDLE_CLOSE;
+}
+/** 원형 UI가 떠 있는 동안의 좌클릭: 마우스가 플레이어 기준 왼쪽이면 질풍참, 오른쪽이면 귀풍참 선택. */
+function selectWheelUi(){
+  skillFamily = (mouseX < player.x) ? "gale" : "kwi";
+  wheelUiOpen = false; skillSwapCd = SKILL_SWAP_CD;
+  addText(player.x, player.y-40, skillFamily === "gale" ? "질풍참 선택" : "귀풍참 선택", "#DCE9F2", 18);
+  syncHud();
+}
+cv.addEventListener("mousedown", e=>{
+  if(e.button === 1){ openWheelUi(); return; }
+  if(wheelUiOpen){ if(e.button === 0) selectWheelUi(); return; }
+  if(e.button === 2) onWheelPress(e);
+  else if(e.button === 0) onPress(e);
+});
 cv.addEventListener("auxclick", e=>{ if(e.button === 1) e.preventDefault(); });
+cv.addEventListener("contextmenu", e=>e.preventDefault());
 cv.addEventListener("touchstart", onPress, {passive:false});
 
 function startDash(tx,ty,target,forceUlt){

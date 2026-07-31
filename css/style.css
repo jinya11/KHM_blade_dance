@@ -153,6 +153,10 @@ html, body{
   background:var(--gold);
   box-shadow:0 0 10px rgba(232,184,75,.75);
 }
+.charge-bar.gale b.on{ background:#2F86D6; box-shadow:0 0 10px rgba(79,195,247,.75); }
+.charge-bar.gale .charge-bar__ready{ color:#3FA9F5; }
+.charge-bar.kwi b.on{ background:#39D97A; box-shadow:0 0 10px rgba(57,217,122,.75); }
+.charge-bar.kwi .charge-bar__ready{ color:#39D97A; }
 
 /* ── 타이틀 / 결과 veil ────────────── */
 .veil{

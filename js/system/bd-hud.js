@@ -3,9 +3,12 @@
 const $ = id=>document.getElementById(id);
 const el = {score:$("scoreTxt"), timerFill:$("timerFill"), timerTxt:$("timerTxt"), life:$("lifeBox"),
             combo:$("combo"), comboNum:$("comboNum"), comboWord:$("comboWord"), charges:$("charges"), chargeReady:$("chargeReady"),
-            staminaFill:$("staminaFill")};
+            chargeLabel:$("chargeLabel"), staminaFill:$("staminaFill")};
 function syncHud(){
   el.score.textContent = score.toLocaleString();
+  el.chargeLabel.textContent = skillFamily === "gale" ? "질풍검" : "귀풍검";
+  el.charges.classList.toggle("gale", skillFamily === "gale");
+  el.charges.classList.toggle("kwi", skillFamily === "kwi");
   const li = el.life.children;
   for(let i=0;i<li.length;i++) li[i].className = i < player.hp ? "" : "off";
   if(combo >= 2){

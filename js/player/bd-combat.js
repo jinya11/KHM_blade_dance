@@ -7,7 +7,7 @@ function burst(x,y,color,n,pow){
     parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:rnd(1.5,4.5),color,life:0,dur:rnd(.3,.72)});
   }
 }
-function killEnemy(e, chain, noCharge){
+function killEnemy(e, chain, noCharge, soundKind){
   if(!e.alive) return;
   e.alive = false; kills++;
   evadeStreak = 0; stamina = Math.min(MAX_STAMINA, stamina + MAX_STAMINA*STAMINA_RESTORE_PCT);
@@ -19,14 +19,16 @@ function killEnemy(e, chain, noCharge){
   player.killed = true;
   burst(e.x, e.y, e.color, chain?10:14, chain?230:300);
   addText(e.x, e.y-e.r-6, "+"+gain, combo>=8?"#E8B84B":"#EDE4D3", combo>=8?21:17);
-  sfx.kill(combo);
+  if(soundKind === "gale") sfx.galeKill();
+  else if(soundKind === "kwi") sfx.kwiKill();
+  else sfx.kill(combo);
   if(!noCharge && combo % CHARGE_STEP === 0 && charges < MAX_CHARGE){
     charges++; flash = Math.max(flash,.3);
     addText(player.x, player.y-40, "질풍검", "#E8B84B", 22);
   }
   if(e.key === "bomber") explode(e.x, e.y);
   if(e.key === "healer") dropHeal(e.x, e.y);
-  if(e.key === "charger") chargerCd = CHARGER_RESPAWN_DELAY;
+  if(e.key === "charger"){ chargerCd = CHARGER_RESPAWN_DELAY; beams = []; }
   syncHud();
 }
 /** 접촉/탄환 등 어떤 피격원이든 공통으로 처리하는 피해 적용. */
@@ -80,6 +82,7 @@ function dashHits(px,py,nx,ny){
       player.x = clamp(player.x,14,W-14); player.y = clamp(player.y,14,H-14);
       player.invuln = Math.max(player.invuln, .45);
       player.quickRecover = BLOCK_RECOVER_WINDOW;
+      player.blocked = true; // 막힌 동안은 마우스 추적 이동도 멈춘다
       endDash(true); syncHud();
       return true;
     }

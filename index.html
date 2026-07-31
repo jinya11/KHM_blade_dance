@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 <title>刃舞 · 인무 (BLADE DANCE)</title>
+<link rel="icon" type="image/png" href="img/%EA%B2%80%EB%AC%B4%20%EC%82%AC%EC%9D%B4%ED%8A%B8%20%EC%9D%B4%EB%AF%B8%EC%A7%80.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -43,9 +44,9 @@
     </div>
 
     <div class="charge-bar" id="charges">
-      <span class="charge-bar__label">질풍검</span>
+      <span class="charge-bar__label" id="chargeLabel">질풍검</span>
       <b></b><b></b><b></b>
-      <i class="charge-bar__ready" id="chargeReady">휠클릭</i>
+      <i class="charge-bar__ready" id="chargeReady">우클릭</i>
     </div>
 
     <button class="pause-btn" id="pauseBtn" type="button" aria-label="일시정지">❚❚</button>
@@ -103,7 +104,9 @@
         <dt>회복</dt>
         <dd><b>회복충</b>을 처치하면 그 자리에 회복 아이템이 남는다. 닿으면 체력이 1 차오른다.</dd>
         <dt>질풍참</dt>
-        <dd>연격 8회마다 <b>질풍검</b>이 1충전(최대 3). <b>마우스 휠 클릭</b>으로 발동 — 1충전은 바라보는 방향으로 검 5자루 발사, 2충전은 그 자리에서 가로줄 전체 공격, 3충전은 화면 전체 공격(방패병은 죽는 대신 방패가 사라지고 0.5초 기절).</dd>
+        <dd>연격 8회마다 <b>질풍검</b>이 1충전(최대 3). <b>마우스 우클릭</b>으로 발동 — 1충전은 <b>검식</b>(바라보는 방향으로 검 5자루 발사), 2충전은 <b>참식</b>(그 자리에서 가로줄 전체 공격), 3충전은 <b>멸식</b>(화면 전체 공격, 방패병은 죽는 대신 방패가 사라지고 0.5초 기절). 풀 충전(3) 상태에선 우클릭으로 바로 쏘거나, 대신 빈 곳 이동의 기력 소모 없이 자유롭게 움직일 수 있다.</dd>
+        <dt>귀풍참</dt>
+        <dd><b>마우스 휠(가운데) 클릭</b>으로 원형 UI를 열어 우클릭 스킬군을 <b>질풍참</b>/<b>귀풍참</b> 중에서 고른다(전환 후 15초간 재사용 불가, 충전 스택은 유지). UI가 떠 있는 동안 게임이 느려지고 이동은 멈춘다. 귀풍참은 1충전 <b>귀환식</b>(현재 위치 마킹 후 5초 뒤 그 자리로 순간이동하며 착지 지점을 내려찍음, 표시된 범위 안 적 처치), 2충전 <b>흡풍식</b>(회오리로 주변 적을 시전 지점으로 끌어당겨 중심에 닿으면 처치), 3충전 <b>광풍식</b>(화면 위 모든 적을 밖으로 밀쳐내며 즉시 처치).</dd>
         <dt>모드</dt>
         <dd><b>일반 모드</b>는 제한 시간 75초. <b>무한 모드</b>는 시간 제한 없이, 오래 버틸수록 적이 점점 더 자주·많이 등장한다.</dd>
         <dt>보스</dt>
@@ -144,6 +147,7 @@
 <script src="js/player/bd-input.js"></script>
 <script src="js/player/bd-combat.js"></script>
 <script src="js/player/bd-gale.js"></script>
+<script src="js/player/bd-kwi.js"></script>
 <script src="js/enemy/bd-hazards.js"></script>
 <script src="legacy/bd-boss.js"></script>
 <script src="legacy/bd-boss-reaver.js"></script>
