@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>刃舞 · 인무 (BLADE DANCE)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="stage">
+  <canvas id="game"></canvas>
+
+  <!-- 인게임 HUD -->
+  <div class="hud hide" id="hudPanel">
+    <div class="hud__top">
+      <div class="hud__score">
+        <div class="label">점수</div>
+        <div class="score" id="scoreTxt">0</div>
+      </div>
+
+      <div class="hud__timer">
+        <div class="timer-bar"><div class="timer-bar__fill" id="timerFill"></div></div>
+        <div class="timer-value" id="timerTxt">75.0</div>
+      </div>
+
+      <div class="hud__life">
+        <div class="label label--right">체력</div>
+        <div class="life-bar" id="lifeBox">
+          <i></i><i></i><i></i><i></i>
+        </div>
+        <div class="label label--right">기력</div>
+        <div class="stamina-bar"><div class="stamina-bar__fill" id="staminaFill"></div></div>
+      </div>
+    </div>
+
+    <!-- 시그니처: 세로 서예 연격 기둥 -->
+    <div class="combo-pillar" id="combo">
+      <div class="combo-pillar__number" id="comboNum">0</div>
+      <div class="combo-pillar__word" id="comboWord">연 격</div>
+    </div>
+
+    <div class="charge-bar" id="charges">
+      <span class="charge-bar__label">질풍검</span>
+      <b></b><b></b><b></b>
+      <i class="charge-bar__ready" id="chargeReady">휠클릭</i>
+    </div>
+
+    <button class="pause-btn" id="pauseBtn" type="button" aria-label="일시정지">❚❚</button>
+  </div>
+
+  <!-- 일시정지 -->
+  <section class="veil howto hide" id="pauseVeil">
+    <div class="howto__panel">
+      <p class="kicker">일 시 정 지</p>
+      <div class="btn-row">
+        <button class="btn" id="resumeBtn" type="button">계속하기</button>
+        <button class="btn btn--ghost" id="pauseRestartBtn" type="button">재시작</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 타이틀 -->
+  <section class="veil" id="titleVeil">
+    <p class="kicker">ONE&nbsp;TOUCH&nbsp;·&nbsp;BLADE&nbsp;DANCE</p>
+    <h1 class="brand">刃<span>舞</span></h1>
+    <p class="tagline">멈추면 베이고, 이어가면 춤이 된다.<br><em>적을 눌러 돌진하고, 베어낸 순간 다시 돌진하라.</em></p>
+
+    <div class="btn-row">
+      <button class="btn" id="startNormalBtn" type="button" data-tooltip="무한 모드를 가볍게 체험할 수 있는 모드.">일반 모드</button>
+      <button class="btn btn--ghost" id="startInfiniteBtn" type="button" data-tooltip="자신의 실력을 끊임없이 증명하도록">무한 모드</button>
+    </div>
+
+    <div class="history" id="scoreHistoryPanel">
+      <p class="history__title">일반 모드 기록</p>
+      <div class="history__list" id="scoreHistoryNormal"></div>
+      <p class="history__title">무한 모드 기록</p>
+      <div class="history__list" id="scoreHistoryInfinite"></div>
+    </div>
+
+    <button class="help-icon" id="helpIconBtn" type="button" data-tooltip="게임 설명">
+      <img src="img/help-icon.png" alt="게임 설명">
+    </button>
+  </section>
+
+  <!-- 플레이 방법 -->
+  <section class="veil howto hide" id="howtoVeil">
+    <div class="howto__panel">
+      <button class="howto__close" id="howtoClose" type="button" aria-label="닫기">✕</button>
+      <p class="kicker">HOW&nbsp;TO&nbsp;PLAY</p>
+      <dl class="rules">
+        <dt>조작</dt>
+        <dd>적을 클릭(터치)하면 그 적에게 돌진해 베어낸다. 빈 곳을 누르면 그 지점까지 자유롭게 이동한다(쿨타임 없음).</dd>
+        <dt>기력</dt>
+        <dd>적을 처치하지 않고 빈 곳으로만 계속 회피하면 <b>기력</b>이 점점 더 크게 소모된다. 완전히 소진되면 잠시 움직일 수 없다. 처치하면 25% 회복, 가만히 있으면 서서히 자동 회복된다.</dd>
+        <dt>연격</dt>
+        <dd>베어낸 즉시 돌진이 <b>재사용 대기 없이 초기화</b>된다. 끊기지 않게 이어가면 연격이 쌓이고 획득 점수가 배로 늘어난다.</dd>
+        <dt>주의</dt>
+        <dd><b>방패병</b>은 정면 돌진을 막아낸다. 등 뒤로 돌아가 베어라. <b>폭탄충</b>은 터지며 주변까지 연격에 넣어준다.
+        <b>저격수</b>는 멈춰서 직선으로 탄환을 쏜다.</dd>
+        <dt>회복</dt>
+        <dd><b>회복충</b>을 처치하면 그 자리에 회복 아이템이 남는다. 닿으면 체력이 1 차오른다.</dd>
+        <dt>질풍참</dt>
+        <dd>연격 8회마다 <b>질풍검</b>이 1충전(최대 3). <b>마우스 휠 클릭</b>으로 발동 — 1충전은 바라보는 방향으로 검 5자루 발사, 2충전은 그 자리에서 가로줄 전체 공격, 3충전은 화면 전체 공격(방패병은 죽는 대신 방패가 사라지고 0.5초 기절).</dd>
+        <dt>모드</dt>
+        <dd><b>일반 모드</b>는 제한 시간 75초. <b>무한 모드</b>는 시간 제한 없이, 오래 버틸수록 적이 점점 더 자주·많이 등장한다.</dd>
+        <dt>보스</dt>
+        <dd>무한 모드에서는 불시에 <b>보스</b>가 등장한다. 등장 중에는 다른 적이 나오지 않는다.</dd>
+        <dt>종료</dt>
+        <dd>체력 소진 시 종료(일반 모드는 75초 경과 시에도 종료).</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 결과 -->
+  <section class="veil hide" id="overVeil">
+    <p class="kicker" id="overReason">시간 종료</p>
+    <div class="grade" id="gradeTxt">C</div>
+    <div class="label">최종 점수</div>
+    <div class="final-score" id="finalScore">0</div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="label">최대 연격</div><div class="stat__value" id="statCombo">0</div></div>
+      <div class="stat"><div class="label">처치</div><div class="stat__value" id="statKills">0</div></div>
+      <div class="stat"><div class="label">정확도</div><div class="stat__value" id="statAcc">0%</div></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" id="retryBtn" type="button">다 시</button>
+      <button class="btn btn--ghost" id="homeBtn" type="button">처음으로</button>
+    </div>
+    <p class="hint">SPACE / ENTER 로도 재시작</p>
+  </section>
+</div>
+
+<script src="bd-constants.js"></script>
+<script src="bd-canvas.js"></script>
+<script src="bd-audio.js"></script>
+<script src="bd-state.js"></script>
+<script src="bd-hud.js"></script>
+<script src="bd-spawn.js"></script>
+<script src="bd-input.js"></script>
+<script src="bd-combat.js"></script>
+<script src="bd-gale.js"></script>
+<script src="bd-hazards.js"></script>
+<script src="bd-boss.js"></script>
+<script src="bd-boss-reaver.js"></script>
+<script src="bd-update.js"></script>
+<script src="bd-render.js"></script>
+<script src="bd-history.js"></script>
+<script src="bd-flow.js"></script>
+</body>
+</html>

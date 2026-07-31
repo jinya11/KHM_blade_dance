@@ -1,0 +1,365 @@
+/* 刃舞 · BLADE DANCE — layout, HUD, veils */
+
+:root{
+  --ink-0: #0A0B11;
+  --ink-1: #171C2B;
+  --paper: #EDE4D3;
+  --paper-dim: #9C947F;
+  --gold: #E8B84B;
+  --red: #E0453A;
+  --teal: #35A88F;
+  --steel: #DCE9F2;
+  --serif: 'Nanum Myeongjo', serif;
+  --sans: 'IBM Plex Sans KR', sans-serif;
+}
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+
+html, body{
+  width:100%; height:100%;
+  background:var(--ink-0);
+  color:var(--paper);
+  font-family:var(--sans);
+  overflow:hidden;
+  -webkit-user-select:none; user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+
+#stage{
+  position:relative;
+  width:100vw; height:100vh;
+  overflow:hidden;
+}
+
+#game{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  display:block;
+  touch-action:none;
+}
+
+.hide{ display:none !important; }
+
+/* ── HUD ───────────────────────────── */
+.hud{
+  position:absolute; inset:0;
+  padding:16px 18px;
+  pointer-events:none;
+  display:flex; flex-direction:column;
+}
+
+.hud__top{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:16px;
+}
+
+.label{
+  font-size:11px; letter-spacing:.14em;
+  color:var(--paper-dim);
+}
+.label--right{ text-align:right; }
+
+.hud__score .score{
+  font-family:var(--serif); font-weight:800;
+  font-size:28px; line-height:1.1;
+  color:var(--paper);
+}
+
+.hud__timer{
+  flex:1; max-width:320px; margin-top:4px;
+}
+.timer-bar{
+  height:5px; border-radius:3px;
+  background:rgba(237,228,211,.14);
+  overflow:hidden;
+}
+.timer-bar__fill{
+  height:100%; width:100%;
+  background:var(--steel);
+  transition:width .1s linear;
+}
+.timer-bar__fill.low{ background:var(--red); }
+.timer-value{
+  margin-top:4px; text-align:center;
+  font-variant-numeric:tabular-nums;
+  font-size:12px; color:var(--paper-dim);
+}
+
+.hud__life .life-bar{
+  display:flex; gap:5px; justify-content:flex-end;
+}
+.life-bar i{
+  width:14px; height:20px;
+  background:var(--red);
+  clip-path:polygon(50% 0%, 100% 20%, 78% 100%, 22% 100%, 0% 20%);
+  box-shadow:0 0 8px rgba(224,69,58,.6);
+}
+.life-bar i.off{
+  background:rgba(237,228,211,.12);
+  box-shadow:none;
+}
+.stamina-bar{
+  width:110px; height:5px; border-radius:3px; margin-top:5px; margin-left:auto;
+  background:rgba(237,228,211,.14); overflow:hidden;
+}
+.stamina-bar__fill{
+  height:100%; width:100%;
+  background:#35A88F;
+  transition:width .12s linear, background .15s;
+}
+.stamina-bar__fill.low{ background:var(--red); }
+
+/* ── 연격 기둥 ─────────────────────── */
+.combo-pillar{
+  position:absolute; top:50%; right:18px; transform:translateY(-50%);
+  text-align:center;
+  opacity:0; transition:opacity .18s ease;
+}
+.combo-pillar.on{ opacity:1; }
+.combo-pillar__number{
+  font-family:var(--serif); font-weight:800;
+  color:var(--paper);
+  line-height:1;
+  transition:color .12s ease, font-size .12s ease;
+}
+.combo-pillar__word{
+  writing-mode:vertical-rl;
+  font-family:var(--serif); font-weight:700;
+  font-size:14px; letter-spacing:.3em;
+  color:var(--paper-dim);
+  margin:6px auto 0;
+}
+
+/* ── 질풍검 충전 ───────────────────── */
+.charge-bar{
+  margin-top:auto;
+  align-self:center;
+  display:flex; align-items:center; gap:8px;
+}
+.charge-bar__label{
+  font-size:11px; letter-spacing:.14em; color:var(--paper-dim);
+}
+.charge-bar b{
+  width:10px; height:10px; border-radius:50%;
+  background:rgba(237,228,211,.14);
+  display:inline-block;
+}
+.charge-bar__ready{
+  font-size:11px; font-style:normal; color:var(--gold);
+  opacity:0; transition:opacity .2s;
+}
+.charge-bar__ready.on{ opacity:1; }
+.charge-bar b.on{
+  background:var(--gold);
+  box-shadow:0 0 10px rgba(232,184,75,.75);
+}
+
+/* ── 타이틀 / 결과 veil ────────────── */
+.veil{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:10px;
+  padding:32px 24px;
+  text-align:center;
+  background:radial-gradient(circle at 50% 30%, rgba(23,28,43,.97), rgba(10,11,17,.99));
+  backdrop-filter:blur(2px);
+  overflow-y:auto;
+}
+
+.kicker{
+  font-size:12px; letter-spacing:.28em; color:var(--paper-dim);
+}
+
+.brand{
+  font-family:var(--serif); font-weight:800;
+  font-size:clamp(48px, 12vw, 88px);
+  color:var(--paper);
+  margin:4px 0 6px;
+}
+.brand span{ color:var(--gold); }
+
+.tagline{
+  font-size:13px; line-height:1.7; color:var(--paper-dim);
+  max-width:420px;
+  margin-bottom:6px;
+}
+.tagline em{ color:var(--steel); font-style:normal; }
+
+.rules{
+  max-width:440px; width:100%;
+  text-align:left;
+  font-size:12.5px; line-height:1.6;
+  color:var(--paper-dim);
+  margin:8px 0 18px;
+}
+.rules dt{
+  color:var(--gold);
+  font-weight:600; margin-top:8px;
+}
+.rules dt:first-child{ margin-top:0; }
+.rules dd b{ color:var(--paper); font-weight:600; }
+
+.btn{
+  position:relative;
+  font-family:var(--serif); font-weight:700;
+  font-size:17px; letter-spacing:.18em;
+  color:var(--ink-0);
+  background:var(--paper);
+  border:none; border-radius:6px;
+  padding:13px 40px;
+  cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.btn[data-tooltip]::after{
+  content:attr(data-tooltip);
+  position:absolute; left:50%; bottom:calc(100% + 10px); transform:translateX(-50%);
+  background:var(--ink-1); color:var(--paper);
+  font-family:var(--sans); font-weight:400; letter-spacing:0;
+  font-size:11.5px; white-space:normal; width:max-content; max-width:220px; text-align:center;
+  padding:7px 11px; border-radius:6px;
+  box-shadow:0 6px 18px rgba(0,0,0,.4);
+  opacity:0; pointer-events:none;
+  transition:opacity .15s ease, transform .15s ease;
+  z-index:5;
+}
+.btn[data-tooltip]:hover::after{ opacity:1; transform:translateX(-50%) translateY(-2px); }
+.btn:hover{ transform:translateY(-1px); box-shadow:0 6px 18px rgba(0,0,0,.35); }
+.btn:active{ transform:translateY(0); }
+
+.btn--ghost{
+  background:transparent;
+  color:var(--paper);
+  border:1px solid rgba(237,228,211,.4);
+}
+
+.btn-row{
+  display:flex; gap:12px; flex-wrap:wrap; justify-content:center;
+}
+
+.hint{
+  margin-top:10px;
+  font-size:11px; color:var(--paper-dim);
+}
+
+.grade{
+  font-family:var(--serif); font-weight:800;
+  font-size:64px; color:var(--gold);
+  line-height:1;
+}
+.final-score{
+  font-family:var(--serif); font-weight:800;
+  font-size:34px; color:var(--paper);
+  margin-bottom:6px;
+}
+
+.stat-row{
+  display:flex; gap:28px;
+  margin:6px 0 18px;
+}
+.stat__value{
+  font-family:var(--serif); font-weight:700;
+  font-size:20px; color:var(--steel);
+  margin-top:2px;
+}
+
+/* ── 과거 기록 ─────────────────────── */
+.history{
+  margin-top:22px;
+  width:100%; max-width:340px;
+}
+.history__title{
+  font-size:11px; letter-spacing:.14em; color:var(--paper-dim);
+  margin:14px 0 8px;
+}
+.history__title:first-child{ margin-top:0; }
+.history__hint{
+  font-size:10px; color:var(--paper-dim); opacity:.65;
+  margin-left:4px;
+  letter-spacing:0;
+}
+.history__list{
+  display:flex; flex-direction:column; gap:4px;
+}
+.history-row{
+  display:flex; align-items:center; gap:10px;
+  padding:6px 12px;
+  border-radius:5px;
+  background:rgba(237,228,211,.05);
+  font-size:12.5px;
+}
+.history-row:first-child{
+  background:rgba(232,184,75,.10);
+}
+.history-rank{
+  color:var(--paper-dim);
+  width:16px;
+}
+.history-row:first-child .history-rank{ color:var(--gold); }
+.history-grade{
+  font-family:var(--serif); font-weight:700;
+  width:18px;
+  color:var(--gold);
+}
+.history-score{
+  margin-left:auto;
+  font-variant-numeric:tabular-nums;
+  color:var(--paper);
+}
+.history-empty{
+  font-size:12px; color:var(--paper-dim);
+  padding:10px 0;
+}
+
+@media (max-width: 480px){
+  .rules{ font-size:12px; }
+  .hud__timer{ max-width:150px; }
+}
+
+/* ── 게임 설명 아이콘 · 오버레이 ────── */
+.help-icon{
+  position:absolute; top:16px; right:16px;
+  width:34px; height:34px; padding:0;
+  background:none; border:none; cursor:pointer;
+  border-radius:50%;
+}
+.help-icon img{ width:100%; height:100%; display:block; }
+.help-icon::after{
+  content:attr(data-tooltip);
+  position:absolute; top:120%; right:0;
+  background:var(--ink-1); color:var(--paper);
+  font-size:11px; white-space:nowrap;
+  padding:5px 9px; border-radius:5px;
+  opacity:0; pointer-events:none;
+  transform:translateY(-4px);
+  transition:opacity .15s ease, transform .15s ease;
+}
+.help-icon:hover::after{ opacity:1; transform:translateY(0); }
+
+.howto{ background:rgba(10,11,17,.6); backdrop-filter:blur(3px); }
+.howto__panel{
+  position:relative;
+  max-width:460px; width:100%;
+  max-height:82vh; overflow-y:auto;
+  background:var(--ink-1);
+  border:1px solid rgba(237,228,211,.12);
+  border-radius:12px;
+  padding:32px 28px 24px;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+.howto__close{
+  position:absolute; top:12px; right:12px;
+  width:28px; height:28px;
+  background:none; border:none; cursor:pointer;
+  color:var(--paper-dim); font-size:16px; line-height:1;
+}
+.howto__close:hover{ color:var(--paper); }
+.howto .rules{ margin-top:14px; }
+
+.pause-btn{
+  position:absolute; bottom:16px; right:16px;
+  width:34px; height:34px;
+  border-radius:50%; border:1px solid rgba(237,228,211,.25);
+  background:rgba(23,28,43,.7); color:var(--paper);
+  font-size:12px; cursor:pointer; pointer-events:auto;
+}
+.pause-btn:hover{ background:rgba(23,28,43,.9); }
