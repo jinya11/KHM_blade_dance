@@ -98,17 +98,6 @@ html, body{
   background:rgba(237,228,211,.12);
   box-shadow:none;
 }
-.stamina-bar{
-  width:110px; height:5px; border-radius:3px; margin-top:5px; margin-left:auto;
-  background:rgba(237,228,211,.14); overflow:hidden;
-}
-.stamina-bar__fill{
-  height:100%; width:100%;
-  background:#35A88F;
-  transition:width .12s linear, background .15s;
-}
-.stamina-bar__fill.low{ background:var(--red); }
-
 /* ── 연격 기둥 ─────────────────────── */
 .combo-pillar{
   position:absolute; top:50%; right:18px; transform:translateY(-50%);
@@ -338,6 +327,16 @@ html, body{
   transition:opacity .15s ease, transform .15s ease;
 }
 .help-icon:hover::after{ opacity:1; transform:translateY(0); }
+
+/* ── 타이틀 배경음악 볼륨 ──────────── */
+.bgm-volume{
+  position:absolute; bottom:16px; right:16px;
+  display:flex; align-items:center; gap:8px;
+}
+.bgm-volume__label{ font-size:11px; letter-spacing:.1em; color:var(--paper-dim); }
+.bgm-volume input[type="range"]{
+  width:100px; accent-color:var(--gold);
+}
 
 .howto{ background:rgba(10,11,17,.6); backdrop-filter:blur(3px); }
 .howto__panel{

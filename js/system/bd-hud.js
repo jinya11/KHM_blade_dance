@@ -3,7 +3,7 @@
 const $ = id=>document.getElementById(id);
 const el = {score:$("scoreTxt"), timerFill:$("timerFill"), timerTxt:$("timerTxt"), life:$("lifeBox"),
             combo:$("combo"), comboNum:$("comboNum"), comboWord:$("comboWord"), charges:$("charges"), chargeReady:$("chargeReady"),
-            chargeLabel:$("chargeLabel"), staminaFill:$("staminaFill")};
+            chargeLabel:$("chargeLabel")};
 function syncHud(){
   el.score.textContent = score.toLocaleString();
   el.chargeLabel.textContent = skillFamily === "gale" ? "질풍검" : "귀풍검";
@@ -21,8 +21,6 @@ function syncHud(){
   const cb = el.charges.getElementsByTagName("b");
   for(let i=0;i<cb.length;i++) cb[i].className = i < charges ? "on" : "";
   el.chargeReady.classList.toggle("on", charges>0);
-  el.staminaFill.style.width = (stamina/MAX_STAMINA*100).toFixed(1)+"%";
-  el.staminaFill.classList.toggle("low", staminaLock>0 || stamina <= MAX_STAMINA*.2);
 }
 function syncTimer(){
   if(bossActive) return; // 보스전 중엔 syncBossHp()가 이 자리(hud__timer)를 체력바로 관리한다

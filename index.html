@@ -32,8 +32,6 @@
         <div class="life-bar" id="lifeBox">
           <i></i><i></i><i></i><i></i>
         </div>
-        <div class="label label--right">기력</div>
-        <div class="stamina-bar"><div class="stamina-bar__fill" id="staminaFill"></div></div>
       </div>
     </div>
 
@@ -84,7 +82,13 @@
     <button class="help-icon" id="helpIconBtn" type="button" data-tooltip="게임 설명">
       <img src="img/help-icon.png" alt="게임 설명">
     </button>
+
+    <div class="bgm-volume">
+      <span class="bgm-volume__label">음악</span>
+      <input type="range" id="bgmVolume" min="0" max="100" value="30">
+    </div>
   </section>
+  <audio id="bgm" src="audio/title-theme.mp3" preload="auto"></audio>
 
   <!-- 플레이 방법 -->
   <section class="veil howto hide" id="howtoVeil">
@@ -143,6 +147,7 @@
 <script src="js/system/bd-audio.js"></script>
 <script src="js/system/bd-state.js"></script>
 <script src="js/system/bd-hud.js"></script>
+<script src="js/system/bd-music.js"></script>
 <script src="js/enemy/bd-spawn.js"></script>
 <script src="js/player/bd-input.js"></script>
 <script src="js/player/bd-combat.js"></script>

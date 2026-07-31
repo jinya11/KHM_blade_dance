@@ -9,6 +9,7 @@ function startGame(newMode){
   $("hudPanel").classList.remove("hide");
   state = "play";
   if(ac() && AC.state === "suspended") AC.resume();
+  stopBgm();
 }
 function gameOver(reason){
   state = "over"; sfx.end();
@@ -33,6 +34,7 @@ function goHome(){
   $("hudPanel").classList.add("hide");
   $("titleVeil").classList.remove("hide");
   renderScoreHistory();
+  playBgm();
 }
 
 // 플레이 방법 오버레이 — 처음 방문 시 자동 표시(뒤에 게임 화면), 이후엔 아이콘으로 재열람(뒤에 타이틀)
