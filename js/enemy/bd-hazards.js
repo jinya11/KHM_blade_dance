@@ -6,8 +6,19 @@ function fireBullet(e){
   bullets.push({x:e.x, y:e.y, vx:Math.cos(a)*BULLET_SPEED, vy:Math.sin(a)*BULLET_SPEED, life:0, dur:1.8, curve:e.evo});
   sfx.shot();
 }
+function fireBulletSpread(e, n, spread){
+  const base = Math.atan2(player.y-e.y, player.x-e.x);
+  for(let i=0;i<n;i++){
+    const a = base + (i-(n-1)/2)*(spread/(n-1));
+    bullets.push({x:e.x, y:e.y, vx:Math.cos(a)*BULLET_SPEED, vy:Math.sin(a)*BULLET_SPEED, life:0, dur:1.8, curve:false});
+  }
+  sfx.shot();
+}
 function dropHeal(x,y){
   heals.push({x, y, life:0, dur:HEAL_LIFE, wob:rnd(0,6.28)});
+}
+function fireBeam(y){
+  beams.push({y, life:0, dur:CHARGER_BEAM_DUR});
 }
 
 /** true를 반환하면 계속 진행, false면 이번 프레임에 라운드가 끝났다는 뜻(update()가 즉시 return해야 함). */
@@ -65,6 +76,13 @@ function updateHazards(dt){
     }
   }
   heals = heals.filter(h => h.life < h.dur);
+
+  // 충전병 빔: 두께 범위 안이면 지속 피해(무적시간이 연타 방지)
+  for(const b of beams){
+    b.life += dt;
+    if(player.invuln <= 0 && Math.abs(player.y-b.y) < CHARGER_BEAM_THICK/2 + PLAYER_R) damagePlayer();
+  }
+  beams = beams.filter(b => b.life < b.dur);
   return true;
 }
 
@@ -90,5 +108,16 @@ function drawHazards(){
     ctx.fillRect(-1.6, -HEAL_R*.32, 3.2, HEAL_R*.64);
     ctx.fillRect(-HEAL_R*.32, -1.6, HEAL_R*.64, 3.2);
     ctx.restore(); ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
+
+  // 충전병 빔
+  for(const b of beams){
+    const fade = Math.min(1, b.life/0.15);
+    ctx.globalAlpha = fade;
+    ctx.fillStyle = "rgba(255,90,70,.35)";
+    ctx.fillRect(0, b.y-CHARGER_BEAM_THICK/2, W, CHARGER_BEAM_THICK);
+    ctx.strokeStyle = "#FF5A46"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(0,b.y); ctx.lineTo(W,b.y); ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 }

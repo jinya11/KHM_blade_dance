@@ -5,11 +5,16 @@ function update(dt){
   if(mode === "normal"){
     timeLeft -= dt;
     if(timeLeft <= 0){ timeLeft = 0; gameOver("시간 종료"); return; }
-  } else if(mode === "infinite" && !bossActive){
-    bossTimer -= dt;
-    if(bossTimer <= 0) spawnBoss();
+  } else if(mode === "infinite"){
+    evoTimer -= dt;
+    if(evoTimer <= 0){
+      evoTarget[EVO_CATEGORIES[Math.floor(Math.random()*EVO_CATEGORIES.length)]]++;
+      evoTimer = rnd(EVO_TIME_MIN, EVO_TIME_MAX);
+      trySpawnEvolved();
+    }
   }
 
+  if(chargerCd > 0) chargerCd = Math.max(0, chargerCd - dt);
   shake = Math.max(0, shake - dt*34);
   flash = Math.max(0, flash - dt*2.4);
   if(player.invuln > 0) player.invuln -= dt;
@@ -112,9 +117,38 @@ function update(dt){
       }
     }
 
+    // 충전병 — 화면에 보이면 충전 시작, 충전 완료 시 가로 빔 발사(계속 반복, 처치 전까지 정지)
+    if(e.key === "charger"){
+      const onScreen = e.x >= 0 && e.x <= W && e.y >= 0 && e.y <= H;
+      if(!e.chargerState){
+        if(onScreen){ e.chargerState = "charge"; e.chargerT = CHARGER_CHARGE_TIME; }
+      } else if(e.chargerState === "charge"){
+        e.chargerT -= dt;
+        if(e.chargerT <= 0){
+          e.chargerState = "fire"; e.chargerT = CHARGER_BEAM_DUR;
+          fireBeam(e.y);
+          shake = Math.max(shake, 10); flash = Math.max(flash, .35); sfx.boom();
+        }
+      } else {
+        e.chargerT -= dt;
+        if(e.chargerT <= 0){ e.chargerState = "charge"; e.chargerT = CHARGER_CHARGE_TIME; }
+      }
+    }
+    // 산탄총 — 근접 사거리 안이면 멈춰서 3발 부채꼴 발사
+    if(e.key === "shotgun"){
+      e.shotCd -= dt;
+      const onScreen = e.x >= 0 && e.x <= W && e.y >= 0 && e.y <= H;
+      if(e.shotCd <= 0 && onScreen && dist(player.x,player.y,e.x,e.y) <= SHOTGUN_RANGE){
+        fireBulletSpread(e, 3, SHOTGUN_SPREAD);
+        e.shotCd = SHOTGUN_COOLDOWN * rnd(.85,1.15);
+      }
+    }
+
     let sp = e.spd * (e.stagger>0 ? .25 : 1);
     if(e.born < .3) sp *= .25;
     if(e.key === "gunner" && dist(player.x,player.y,e.x,e.y) < GUNNER_RANGE*.55) sp = 0; // 사거리 안이면 멈춰서 사격
+    if(e.key === "shotgun" && dist(player.x,player.y,e.x,e.y) <= SHOTGUN_RANGE) sp = 0; // 근접 사거리 안이면 멈춰서 사격
+    if(e.key === "charger" && e.chargerState) sp = 0; // 충전 시작 후엔 정지
     if(e.key === "guardian" && e.slamWind > 0) sp = 0; // 내려찍기 예비동작 중엔 정지
     e.wob += dt*4;
     let moveA = a, wob = e.key==="swift" ? Math.sin(e.wob)*.5 : 0;
@@ -127,7 +161,8 @@ function update(dt){
     // 저격수: 사거리 안이면 주기적으로 직선 탄환 발사
     if(e.key === "gunner"){
       e.shotCd -= dt;
-      if(e.shotCd <= 0 && dist(player.x,player.y,e.x,e.y) <= GUNNER_RANGE){
+      const onScreen = e.x >= 0 && e.x <= W && e.y >= 0 && e.y <= H;
+      if(e.shotCd <= 0 && onScreen && dist(player.x,player.y,e.x,e.y) <= GUNNER_RANGE){
         fireBullet(e);
         e.shotCd = GUNNER_COOLDOWN * rnd(.85,1.15);
       }

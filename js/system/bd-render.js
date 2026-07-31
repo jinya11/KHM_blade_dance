@@ -78,6 +78,25 @@ function draw(){
       ctx.fillStyle = "#0B0C12";
       ctx.fillRect(-R*.12,-R*.5,R*.24,R);
       ctx.fillRect(-R*.5,-R*.12,R,R*.24);
+    } else if(e.key === "shotgun"){
+      ctx.rotate(e.facing);
+      ctx.fillStyle = e.color;
+      ctx.beginPath();
+      ctx.moveTo(R*1.4,0); ctx.lineTo(R*.5,R*.7); ctx.lineTo(-R*.8,R*.55);
+      ctx.lineTo(-R*.8,-R*.55); ctx.lineTo(R*.5,-R*.7);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#0B0C12"; ctx.beginPath(); ctx.arc(0,0,R*.3,0,6.283); ctx.fill();
+    } else if(e.key === "charger"){
+      ctx.fillStyle = e.color;
+      ctx.beginPath(); ctx.arc(0,0,R,0,6.283); ctx.fill();
+      if(e.chargerState === "charge"){
+        const k = 1 - e.chargerT/CHARGER_CHARGE_TIME;
+        ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(0,0,R+6,-1.5708,-1.5708+6.283*k); ctx.stroke();
+      } else if(e.chargerState === "fire"){
+        ctx.fillStyle = "rgba(255,255,255,.85)";
+        ctx.beginPath(); ctx.arc(0,0,R*.5,0,6.283); ctx.fill();
+      }
     } else if(e.key === "boss"){
       drawBoss(e, R);
     } else {

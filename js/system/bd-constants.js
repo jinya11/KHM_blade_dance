@@ -56,6 +56,7 @@ const BOSS_INTERVAL_MAX = 90; // 최대 대기(초)
 
 // 무한 모드 진화 — 보스 처치마다 세 범주(먹덩이/저격수/방패병) 중 하나가 랜덤으로 1마리씩 누적된다(체력 강화 없음)
 const EVO_CATEGORIES = ["slime","gunner","guardian"];
+const EVO_TIME_MIN = 30, EVO_TIME_MAX = 60; // 시간 경과에 따른 진화 개체 등장 주기(초)
 const EVO_SLIME_RANGE = 260;    // 이 거리 안이면 돌진 시도
 const EVO_SLIME_CHANCE = 0.3;   // 판정 주기마다 돌진할 확률
 const EVO_SLIME_INTERVAL = 1.2; // 돌진 판정 주기(초)
@@ -67,13 +68,29 @@ const EVO_GUARDIAN_WIND = 0.5;  // 내려찍기 예비동작(초)
 const EVO_GUARDIAN_CD = 3.0;    // 내려찍기 재사용 대기(초)
 const GUNNER_MAX_ALIVE = 10;    // 저격수 동시 생존 마릿수 상한
 
+// 산탄총 — 근접 사거리 안이면 멈춰서 3발 부채꼴 발사
+const SHOTGUN_RANGE = 160;
+const SHOTGUN_COOLDOWN = 1.8;
+const SHOTGUN_SPREAD = 0.7;  // 부채꼴 전체 각도(rad)
+
+// 충전병 — 필드(화면)에 보이면 충전 시작, 충전 완료 시 가로 빔 발사. 필드에 1마리만, 처치 후 대기 시간 뒤 재등장.
+const CHARGER_CHARGE_TIME = 5;   // 충전 시간(초)
+const CHARGER_BEAM_DUR = 3;      // 빔 지속 시간(초)
+const CHARGER_RESPAWN_DELAY = 20; // 처치 후 재등장까지 대기(초)
+const CHARGER_BEAM_THICK = 46;   // 빔 두께(px)
+
+// 무한 모드: 산탄총/충전병이 등장하기 시작하는 시점(초). 일반 모드는 시간 제한 없이 처음부터 등장.
+const INFINITE_NEW_ENEMY_DELAY = 45;
+
 const TYPES = {
   slime:    {r:19, spd:47,  score:100, color:"#7C8AA8", name:"먹덩이"},
   swift:    {r:14, spd:146, score:210, color:"#E0453A", name:"질풍조"},
   guardian: {r:22, spd:40,  score:320, color:"#35A88F", name:"방패병"},
   bomber:   {r:20, spd:66,  score:170, color:"#E8B84B", name:"폭탄충"},
   gunner:   {r:17, spd:34,  score:260, color:"#8B5FBF", name:"저격수"},
-  healer:   {r:15, spd:64,  score:140, color:"#8ED08B", name:"회복충"}
+  healer:   {r:15, spd:64,  score:140, color:"#8ED08B", name:"회복충"},
+  shotgun:  {r:18, spd:60,  score:230, color:"#D97A3D", name:"산탄총"},
+  charger:  {r:26, spd:50,  score:400, color:"#4FC3F7", name:"충전병"}
 };
 
 const rnd = (a,b)=>a+Math.random()*(b-a);

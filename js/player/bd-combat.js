@@ -26,6 +26,7 @@ function killEnemy(e, chain, noCharge){
   }
   if(e.key === "bomber") explode(e.x, e.y);
   if(e.key === "healer") dropHeal(e.x, e.y);
+  if(e.key === "charger") chargerCd = CHARGER_RESPAWN_DELAY;
   syncHud();
 }
 /** 접촉/탄환 등 어떤 피격원이든 공통으로 처리하는 피해 적용. */
