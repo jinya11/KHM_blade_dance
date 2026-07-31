@@ -16,17 +16,27 @@ function updateHazards(dt){
   for(const b of bullets){ b.life += dt; b.x += b.vx*dt; b.y += b.vy*dt; }
   if(player.invuln <= 0){
     for(const b of bullets){
-      if(b.life < b.dur && dist(b.x,b.y,player.x,player.y) < PLAYER_R + BULLET_R){
+      if(b.reflected || b.life >= b.dur || dist(b.x,b.y,player.x,player.y) >= PLAYER_R + BULLET_R) continue;
+      if(player.dashing && Math.random() < DASH_PARRY_CHANCE){
+        b.vx = -b.vx; b.vy = -b.vy; b.reflected = true;
+        addText(player.x, player.y-40, "패링!", "#8B5FBF", 20);
+        burst(player.x, player.y, "#8B5FBF", 8, 220);
+        sfx.block();
+      } else {
         b.life = b.dur;
-        if(player.dashing && Math.random() < DASH_PARRY_CHANCE){
-          addText(player.x, player.y-40, "패링!", "#8B5FBF", 20);
-          burst(player.x, player.y, "#8B5FBF", 8, 220);
-          sfx.block();
-        } else {
-          damagePlayer();
-        }
-        break; // 한 프레임에 한 발만 적용
+        damagePlayer();
       }
+      break; // 한 프레임에 한 발만 적용
+    }
+  }
+  // 반사된 탄환: 적 피격 판정
+  for(const b of bullets){
+    if(!b.reflected || b.life >= b.dur) continue;
+    for(const o of enemies){
+      if(!o.alive || dist(b.x,b.y,o.x,o.y) >= o.r + BULLET_R) continue;
+      b.life = b.dur;
+      if(o.key === "boss") hitBoss(o, BOSS_HIT_DMG); else killEnemy(o, true);
+      break;
     }
   }
   bullets = bullets.filter(b => b.life < b.dur && b.x > -40 && b.x < W+40 && b.y > -40 && b.y < H+40);
@@ -52,8 +62,8 @@ function drawHazards(){
   // 탄환
   for(const b of bullets){
     ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(Math.atan2(b.vy, b.vx));
-    ctx.fillStyle = "#8B5FBF";
-    ctx.shadowColor = "rgba(139,95,191,.85)"; ctx.shadowBlur = 10;
+    ctx.fillStyle = b.reflected ? "#E8B84B" : "#8B5FBF";
+    ctx.shadowColor = b.reflected ? "rgba(232,184,75,.85)" : "rgba(139,95,191,.85)"; ctx.shadowBlur = 10;
     ctx.beginPath(); ctx.ellipse(0,0, BULLET_R*1.6, BULLET_R*.7, 0, 0, 6.283); ctx.fill();
     ctx.restore(); ctx.shadowBlur = 0;
   }
