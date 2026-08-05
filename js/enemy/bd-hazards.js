@@ -30,6 +30,18 @@ function fireBeam(pos, vertical, thick){
   beams.push({pos, vertical: !!vertical, thick: thick || CHARGER_BEAM_THICK, life:0, dur:CHARGER_BEAM_DUR});
 }
 
+/** filterFn을 통과하는 탄환이 첫 번째로 닿은 적에게 onHit을 적용하고 그 탄환을 소모한다(탄환 1개당 1적만). */
+function bulletHitsEnemy(filterFn, onHit){
+  for(const b of bullets){
+    if(!filterFn(b) || b.life >= b.dur) continue;
+    for(const o of enemies){
+      if(!o.alive || dist(b.x,b.y,o.x,o.y) >= o.r + BULLET_R) continue;
+      b.life = b.dur;
+      onHit(b, o);
+      break;
+    }
+  }
+}
 /** true를 반환하면 계속 진행, false면 이번 프레임에 라운드가 끝났다는 뜻(update()가 즉시 return해야 함). */
 function updateHazards(dt){
   // 탄환: 이동 + 피격 판정
@@ -43,26 +55,12 @@ function updateHazards(dt){
     b.life += dt; b.x += b.vx*dt; b.y += b.vy*dt;
   }
   // 반사된 탄환(이전 프레임에 반사됨): 적 피격 판정 — 반사 판정보다 먼저 처리해 반사 즉시 소모되지 않게 한다
-  for(const b of bullets){
-    if(!b.reflected || b.life >= b.dur) continue;
-    for(const o of enemies){
-      if(!o.alive || dist(b.x,b.y,o.x,o.y) >= o.r + BULLET_R) continue;
-      b.life = b.dur;
-      addText(o.x, o.y-o.r-10, "자멸", "#E8B84B", 19);
-      if(o.key === "boss") hitBoss(o, BOSS_HIT_DMG); else killEnemy(o, true);
-      break;
-    }
-  }
+  bulletHitsEnemy(b=>b.reflected, (b,o)=>{
+    addText(o.x, o.y-o.r-10, "자멸", "#E8B84B", 19);
+    if(o.key === "boss") hitBoss(o, BOSS_HIT_DMG); else killEnemy(o, true);
+  });
   // 폭탄충 파편탄: 플레이어에겐 무해하지만 다른 적에게 맞으면 처치 판정
-  for(const b of bullets){
-    if(!b.shrapnel || b.life >= b.dur) continue;
-    for(const o of enemies){
-      if(!o.alive || o.key === "boss" || dist(b.x,b.y,o.x,o.y) >= o.r + BULLET_R) continue;
-      b.life = b.dur;
-      hitOrKill(o, true, false, undefined);
-      break;
-    }
-  }
+  bulletHitsEnemy(b=>b.shrapnel, (b,o)=>{ if(o.key !== "boss") hitOrKill(o, true, false, undefined); });
   if(player.invuln <= 0){
     for(const b of bullets){
       const hitR = (player.dashing ? PLAYER_R*DASH_BULLET_R_MULT : PLAYER_R) + BULLET_R;

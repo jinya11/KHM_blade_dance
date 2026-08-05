@@ -38,17 +38,7 @@ function updateKwi(dt){
       player.x = recallMark.x; player.y = recallMark.y;
       shake = Math.max(shake, 14); flash = Math.max(flash, .5);
       burst(player.x, player.y, KWI_COLOR, 16, 300);
-      for(const e of enemies){
-        if(!e.alive || e.hidden || dist(player.x,player.y,e.x,e.y) > RECALL_SLAM_R + e.r) continue;
-        if(e.key === "boss"){ hitBoss(e, BOSS_ULT_DMG); continue; }
-        if(e.key === "guardian" && !e.guardDisarmed){
-          e.guardDisarmed = true; e.stagger = GALE_GUARD_STUN;
-          e.slamWind = 0; e.spinT = 0; // 파방 순간 진행 중이던 내려찍기/회전베기 예비동작 취소
-          addText(e.x, e.y-e.r-10, "파방!", "#E8B84B", 20);
-          continue;
-        }
-        hitOrKill(e, true, true, "kwi", 2);
-      }
+      hitAreaDisarm(e => dist(player.x,player.y,e.x,e.y) <= RECALL_SLAM_R + e.r, "kwi", false);
       recallMark = null;
     }
   }

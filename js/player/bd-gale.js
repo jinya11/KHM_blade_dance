@@ -53,12 +53,7 @@ function galeLine(){
   for(let i=0;i<12;i++){
     spawnWind(rnd(0,W), y+rnd(-16,16), Math.random()<.5?0:Math.PI, rnd(140,220), rnd(.4,.5));
   }
-  for(const e of enemies){
-    if(!e.alive || e.hidden || Math.abs(e.y - y) > GALE_LINE_THICK + e.r) continue;
-    if(e.key === "boss"){ hitBoss(e, BOSS_ULT_DMG); continue; }
-    if(e.key === "guardian") addText(e.x, e.y-e.r-10, "약점!", "#E8B84B", 19);
-    hitOrKill(e, true, true, "gale", 2);
-  }
+  hitAreaSimple(e => Math.abs(e.y - y) <= GALE_LINE_THICK + e.r, "gale");
 }
 function galeNuke(){
   shake = Math.max(shake, 20); flash = Math.max(flash, .7);
@@ -67,16 +62,5 @@ function galeNuke(){
   for(let i=0;i<28;i++){ // 화면 전체에 바람이 몰아치는 느낌 — 무작위 위치·각도로 뿌린다
     spawnWind(rnd(0,W), rnd(0,H), rnd(0,6.283), rnd(90,220), rnd(.5,.75));
   }
-  for(const e of enemies){
-    if(!e.alive || e.hidden) continue;
-    if(e.key === "boss"){ hitBoss(e, BOSS_ULT_DMG); continue; }
-    if(e.key === "guardian" && !e.guardDisarmed){
-      e.guardDisarmed = true; e.stagger = GALE_GUARD_STUN;
-      e.slamWind = 0; e.spinT = 0; // 파방 순간 진행 중이던 내려찍기/회전베기 예비동작 취소
-      addText(e.x, e.y-e.r-10, "파방!", "#E8B84B", 20);
-      burst(e.x, e.y, "#35A88F", 12, 260);
-      continue;
-    }
-    hitOrKill(e, true, true, "gale", 2);
-  }
+  hitAreaDisarm(()=>true, "gale", true);
 }

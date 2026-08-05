@@ -7,6 +7,23 @@ function burst(x,y,color,n,pow){
     parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:rnd(1.5,4.5),color,life:0,dur:rnd(.3,.72)});
   }
 }
+/** 처치 성공 시 공통 보상(연격/기력) 적용 — hitOrKill 명중, killEnemy 둘 다 사용. */
+function onSuccessfulHit(){
+  evadeStreak = 0; stamina = Math.min(MAX_STAMINA, stamina + MAX_STAMINA*STAMINA_RESTORE_PCT);
+  combo++; comboTimer = COMBO_WINDOW; maxCombo = Math.max(maxCombo, combo);
+}
+/** 처치 효과음 — soundKind로 질풍참/귀풍참/기본 중 하나를 고른다. */
+function playKillSound(soundKind){
+  if(soundKind === "gale") sfx.galeKill();
+  else if(soundKind === "kwi") sfx.kwiKill();
+  else sfx.kill(combo);
+}
+/** 연격 8회마다 질풍검 1충전(최대 3) — noCharge면 건너뛴다. */
+function tryGainCharge(noCharge){
+  if(noCharge || combo % CHARGE_STEP !== 0 || charges >= MAX_CHARGE) return;
+  charges++; flash = Math.max(flash,.3);
+  addText(player.x, player.y-40, "질풍검", "#E8B84B", 22);
+}
 /** 다타형(5단계 진화) 적에게 사용하는 공용 피격 진입점 — 처치 조건 안 되면 타격만 처리하고 살려둔다. */
 function hitOrKill(e, chain, noCharge, soundKind, dmg){
   if(!e.alive) return false;
@@ -14,16 +31,10 @@ function hitOrKill(e, chain, noCharge, soundKind, dmg){
   if(e.hp > dmg){
     e.hp -= dmg; e.hitFlash = .15;
     player.killed = true; hitDashes++; // 처치는 아니어도 "명중"으로 취급 — 쿨타임 페널티 없음
-    evadeStreak = 0; stamina = Math.min(MAX_STAMINA, stamina + MAX_STAMINA*STAMINA_RESTORE_PCT);
-    combo++; comboTimer = COMBO_WINDOW; maxCombo = Math.max(maxCombo, combo);
+    onSuccessfulHit();
     burst(e.x, e.y, e.color, 6, 160);
-    if(soundKind === "gale") sfx.galeKill();
-    else if(soundKind === "kwi") sfx.kwiKill();
-    else sfx.kill(combo);
-    if(!noCharge && combo % CHARGE_STEP === 0 && charges < MAX_CHARGE){
-      charges++; flash = Math.max(flash,.3);
-      addText(player.x, player.y-40, "질풍검", "#E8B84B", 22);
-    }
+    playKillSound(soundKind);
+    tryGainCharge(noCharge);
     syncHud();
     return false;
   }
@@ -40,22 +51,15 @@ function killEnemy(e, chain, noCharge, soundKind){
     return;
   }
   e.alive = false; kills++;
-  evadeStreak = 0; stamina = Math.min(MAX_STAMINA, stamina + MAX_STAMINA*STAMINA_RESTORE_PCT);
-  combo++; comboTimer = COMBO_WINDOW;
-  maxCombo = Math.max(maxCombo, combo);
+  onSuccessfulHit();
   const mult = 1 + (combo-1)*.15;
   const gain = Math.round(e.score * mult);
   score += gain;
   player.killed = true;
   burst(e.x, e.y, e.color, chain?10:14, chain?230:300);
   addText(e.x, e.y-e.r-6, "+"+gain, combo>=8?"#E8B84B":"#EDE4D3", combo>=8?21:17);
-  if(soundKind === "gale") sfx.galeKill();
-  else if(soundKind === "kwi") sfx.kwiKill();
-  else sfx.kill(combo);
-  if(!noCharge && combo % CHARGE_STEP === 0 && charges < MAX_CHARGE){
-    charges++; flash = Math.max(flash,.3);
-    addText(player.x, player.y-40, "질풍검", "#E8B84B", 22);
-  }
+  playKillSound(soundKind);
+  tryGainCharge(noCharge);
   if(e.key === "bomber"){
     if(e.evoStage === 5){
       delayedBlasts.push({x:e.x, y:e.y, t:EVO_BOMBER_NUKE_DELAY, dur:EVO_BOMBER_NUKE_DELAY, radius:EVO_BOMBER_NUKE_R, big:true});
@@ -113,6 +117,30 @@ function fireShrapnel(x, y, n){
   for(let i=0;i<n;i++){
     const a = i/n*6.283 + rnd(-.15,.15);
     bullets.push({x, y, vx:Math.cos(a)*260, vy:Math.sin(a)*260, life:0, dur:1.1, curve:false, noPlayerHit:true, shrapnel:true});
+  }
+}
+/** 질풍참/귀풍참 광역기 공용 — pred(e)를 만족하는 적마다 보스 분기 후 hitOrKill(dmg2). 방패병 파방 없이 그냥 맞는 계열(검식/참식)용. */
+function hitAreaSimple(pred, soundKind){
+  for(const e of enemies){
+    if(!e.alive || e.hidden || !pred(e)) continue;
+    if(e.key === "boss"){ hitBoss(e, BOSS_ULT_DMG); continue; }
+    if(e.key === "guardian") addText(e.x, e.y-e.r-10, "약점!", "#E8B84B", 19);
+    hitOrKill(e, true, true, soundKind, 2);
+  }
+}
+/** 위와 동일하되, 방패병이 아직 파방 전이면 이번 판정으론 방패만 깨고 넘어간다(멸식/귀환식용). */
+function hitAreaDisarm(pred, soundKind, burstOnDisarm){
+  for(const e of enemies){
+    if(!e.alive || e.hidden || !pred(e)) continue;
+    if(e.key === "boss"){ hitBoss(e, BOSS_ULT_DMG); continue; }
+    if(e.key === "guardian" && !e.guardDisarmed){
+      e.guardDisarmed = true; e.stagger = GALE_GUARD_STUN;
+      e.slamWind = 0; e.spinT = 0; // 파방 순간 진행 중이던 내려찍기/회전베기 예비동작 취소
+      addText(e.x, e.y-e.r-10, "파방!", "#E8B84B", 20);
+      if(burstOnDisarm) burst(e.x, e.y, "#35A88F", 12, 260);
+      continue;
+    }
+    hitOrKill(e, true, true, soundKind, 2);
   }
 }
 function blockedBy(e){
