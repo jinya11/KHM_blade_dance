@@ -7,8 +7,38 @@ function burst(x,y,color,n,pow){
     parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:rnd(1.5,4.5),color,life:0,dur:rnd(.3,.72)});
   }
 }
+/** 다타형(5단계 진화) 적에게 사용하는 공용 피격 진입점 — 처치 조건 안 되면 타격만 처리하고 살려둔다. */
+function hitOrKill(e, chain, noCharge, soundKind, dmg){
+  if(!e.alive) return false;
+  dmg = dmg || 1;
+  if(e.hp > dmg){
+    e.hp -= dmg; e.hitFlash = .15;
+    player.killed = true; hitDashes++; // 처치는 아니어도 "명중"으로 취급 — 쿨타임 페널티 없음
+    evadeStreak = 0; stamina = Math.min(MAX_STAMINA, stamina + MAX_STAMINA*STAMINA_RESTORE_PCT);
+    combo++; comboTimer = COMBO_WINDOW; maxCombo = Math.max(maxCombo, combo);
+    burst(e.x, e.y, e.color, 6, 160);
+    if(soundKind === "gale") sfx.galeKill();
+    else if(soundKind === "kwi") sfx.kwiKill();
+    else sfx.kill(combo);
+    if(!noCharge && combo % CHARGE_STEP === 0 && charges < MAX_CHARGE){
+      charges++; flash = Math.max(flash,.3);
+      addText(player.x, player.y-40, "질풍검", "#E8B84B", 22);
+    }
+    syncHud();
+    return false;
+  }
+  killEnemy(e, chain, noCharge, soundKind);
+  return true;
+}
 function killEnemy(e, chain, noCharge, soundKind){
   if(!e.alive) return;
+  if(e.key === "bomber" && e.evoStage === 3 && !e.lunging){
+    // 3단계 유도판: 즉시 죽지 않고 플레이어 쪽으로 짧게 돌진한 뒤 그 자리에서 터진다
+    e.lunging = true; e.lungeT = 0;
+    const a = Math.atan2(player.y-e.y, player.x-e.x);
+    e.lungeVx = Math.cos(a)*EVO_BOMBER_LUNGE_SPEED; e.lungeVy = Math.sin(a)*EVO_BOMBER_LUNGE_SPEED;
+    return;
+  }
   e.alive = false; kills++;
   evadeStreak = 0; stamina = Math.min(MAX_STAMINA, stamina + MAX_STAMINA*STAMINA_RESTORE_PCT);
   combo++; comboTimer = COMBO_WINDOW;
@@ -26,31 +56,63 @@ function killEnemy(e, chain, noCharge, soundKind){
     charges++; flash = Math.max(flash,.3);
     addText(player.x, player.y-40, "질풍검", "#E8B84B", 22);
   }
-  if(e.key === "bomber") explode(e.x, e.y);
+  if(e.key === "bomber"){
+    if(e.evoStage === 5){
+      delayedBlasts.push({x:e.x, y:e.y, t:EVO_BOMBER_NUKE_DELAY, dur:EVO_BOMBER_NUKE_DELAY, radius:EVO_BOMBER_NUKE_R, big:true});
+    } else {
+      const radius = e.evoStage >= 1 ? EVO_BOMBER_R1 : 118;
+      explode(e.x, e.y, radius, e.evoStage === 2 ? EVO_BOMBER_SHRAPNEL : 0); // 파편탄은 2단계 전용(3/4단계엔 안 나옴)
+      if(e.evoStage === 4) delayedBlasts.push({x:e.x, y:e.y, t:EVO_BOMBER_CHAIN_DELAY, dur:EVO_BOMBER_CHAIN_DELAY, radius});
+    }
+  }
+  if(e.key === "slime" && e.evoStage === 2) acidPools.push({x:e.x, y:e.y, r:EVO_SLIME_ACID_R, life:0, dur:EVO_SLIME_ACID_DUR, hitCd:EVO_SLIME_ACID_START_CD});
+  if(e.key === "slime" && e.evoStage === 3){
+    for(let i=0;i<2;i++){
+      const a = rnd(0,6.283), mx = e.x+Math.cos(a)*14, my = e.y+Math.sin(a)*14;
+      enemies.push({key:"slime", x:mx, y:my, r:e.r*.6, spd:e.spd*1.25, score:Math.round(e.score*.35), color:e.color,
+                    alive:true, facing:0, atk:.4, born:0, stagger:0, wob:rnd(0,6.28), kb:0, kx:0, ky:0,
+                    shotCd:9, guardDisarmed:false, evoStage:0, hp:1, maxHp:1, hitFlash:0,
+                    chargeCd:9, charging:false, chargeA:0, acidCd:9, slamCd:9, slamWind:0, spinT:0, wallCd:9,
+                    lunging:false, lungeT:0, lungeVx:0, lungeVy:0, mini:true, chargerState:null, chargerT:0});
+    }
+  }
   if(e.key === "healer") dropHeal(e.x, e.y);
   if(e.key === "charger"){ chargerCd = CHARGER_RESPAWN_DELAY; beams = []; }
+  if(e.key === "dummy") dummyRespawns.push({x:e.x, y:e.y, t:.2}); // 훈련장 허수아비 — 잠깐 뒤 같은 자리에 리스폰(같은 대시 판정에 바로 다시 잡혀 무한루프 나는 것 방지)
   syncHud();
 }
 /** 접촉/탄환 등 어떤 피격원이든 공통으로 처리하는 피해 적용. */
 function damagePlayer(){
-  player.hp--; player.invuln = 1.55;
+  if(player.overheal > 0) player.overheal--; else player.hp--; // 오버힐이 있으면 그것부터 깎인다
+  player.hp = Math.max(0, player.hp);
+  player.invuln = 1.55;
   combo = 0; comboTimer = 0; shake = 14; sfx.hurt();
   addText(player.x, player.y-42, "피격", "#E0453A", 20);
   burst(player.x, player.y, "#E0453A", 12, 260);
   for(const o of enemies){
-    if(!o.alive) continue;
+    if(!o.alive || o.key === "dummy") continue;
     const d = dist(o.x,o.y,player.x,player.y);
     if(d < 190){ o.kb = 780; o.kx = (o.x-player.x)/(d||1); o.ky = (o.y-player.y)/(d||1); o.atk = Math.max(o.atk,.5); }
   }
   syncHud();
-  if(player.hp <= 0) gameOver("체력 소진");
+  if(player.hp <= 0 && mode !== "training") gameOver("체력 소진"); // 훈련장에서는 죽지 않는다
 }
-function explode(x,y){
-  sfx.boom(); shake = Math.max(shake, 8);
-  parts.push({ring:true,x,y,r:8,color:"#E8B84B",life:0,dur:.42});
-  burst(x,y,"#E8B84B",18,420);
+function explode(x, y, radius, shrapnel){
+  radius = radius || 118;
+  const big = radius > 200;
+  sfx.boom(); shake = Math.max(shake, big?18:8);
+  parts.push({ring:true,x,y,r: big?16:8,color:"#E8B84B",life:0,dur: big?.6:.42,radius});
+  burst(x,y,"#E8B84B",big?32:18,big?520:420);
   for(const o of enemies){
-    if(o.alive && dist(x,y,o.x,o.y) < 118){ player.hitSet && player.hitSet.add(o); killEnemy(o, true); }
+    if(o.alive && dist(x,y,o.x,o.y) < radius){ player.hitSet && player.hitSet.add(o); hitOrKill(o, true, false, undefined, 2); }
+  }
+  if(shrapnel) fireShrapnel(x, y, shrapnel);
+}
+function fireShrapnel(x, y, n){
+  // 폭탄충 파편탄은 다른 적을 끌어들이는 연쇄용이지 플레이어를 노리는 게 아니라서 플레이어에게는 무해하다
+  for(let i=0;i<n;i++){
+    const a = i/n*6.283 + rnd(-.15,.15);
+    bullets.push({x, y, vx:Math.cos(a)*260, vy:Math.sin(a)*260, life:0, dur:1.1, curve:false, noPlayerHit:true, shrapnel:true});
   }
 }
 function blockedBy(e){
@@ -60,9 +122,9 @@ function blockedBy(e){
 }
 function endDash(penalty){
   player.dashing = false;
-  if(player.killed){ player.cd = 0; hitDashes++; }
-  else if(player.isReposition && !penalty){ player.cd = 0; } // 빈 공간 이동은 쿨타임 없음
-  else player.cd = penalty ? BLOCK_CD : DASH_CD;
+  if(player.killed){ player.cd = 0; player.cdTotal = 0; hitDashes++; }
+  else if(player.isReposition && !penalty){ player.cd = 0; player.cdTotal = 0; } // 빈 공간 이동은 쿨타임 없음
+  else { player.cd = penalty ? BLOCK_CD : DASH_CD; player.cdTotal = player.cd; }
 }
 function dashHits(px,py,nx,ny){
   if(dashHitsCage(nx,ny)){ endDash(false); return true; } // 감금 벽: 벽만 깎이고 플레이어는 피해 없음
@@ -78,16 +140,16 @@ function dashHits(px,py,nx,ny){
       shake = Math.max(shake, 11); sfx.block();
       addText(e.x, e.y-e.r-10, "막힘!", "#35A88F", 20);
       burst(e.x, e.y, "#35A88F", 9, 200);
-      player.x -= player.dx * 46; player.y -= player.dy * 46;
+      const kb = e.evoStage === 2 ? EVO_GUARDIAN_KNOCKBACK : 46; // 2단계: 반격 — 넉백만 크게(데미지 없음)
+      player.x -= player.dx * kb; player.y -= player.dy * kb;
       player.x = clamp(player.x,14,W-14); player.y = clamp(player.y,14,H-14);
       player.invuln = Math.max(player.invuln, .45);
       player.quickRecover = BLOCK_RECOVER_WINDOW;
-      player.blocked = true; // 막힌 동안은 마우스 추적 이동도 멈춘다
       endDash(true); syncHud();
       return true;
     }
     if(e.key === "guardian") addText(e.x, e.y-e.r-10, "약점!", "#E8B84B", 19);
-    killEnemy(e, false);
+    hitOrKill(e, false);
   }
   return false;
 }

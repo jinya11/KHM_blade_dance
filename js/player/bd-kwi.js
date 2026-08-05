@@ -27,7 +27,7 @@ function kwiPush(){
     if(e.key === "boss"){ hitBoss(e, BOSS_ULT_DMG); continue; }
     const a = Math.atan2(e.y-player.y, e.x-player.x);
     e.x += Math.cos(a)*220; e.y += Math.sin(a)*220;
-    killEnemy(e, true, true, "kwi");
+    hitOrKill(e, true, true, "kwi", 2);
   }
 }
 /** 매 프레임: 귀환식 대기 중인 마킹의 순간이동 판정과 회오리들의 흡입/밀쳐내기를 처리한다. */
@@ -43,10 +43,11 @@ function updateKwi(dt){
         if(e.key === "boss"){ hitBoss(e, BOSS_ULT_DMG); continue; }
         if(e.key === "guardian" && !e.guardDisarmed){
           e.guardDisarmed = true; e.stagger = GALE_GUARD_STUN;
+          e.slamWind = 0; e.spinT = 0; // 파방 순간 진행 중이던 내려찍기/회전베기 예비동작 취소
           addText(e.x, e.y-e.r-10, "파방!", "#E8B84B", 20);
           continue;
         }
-        killEnemy(e, true, true, "kwi");
+        hitOrKill(e, true, true, "kwi", 2);
       }
       recallMark = null;
     }

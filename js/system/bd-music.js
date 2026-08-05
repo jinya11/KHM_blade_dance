@@ -21,3 +21,10 @@ bgm.addEventListener("ended", ()=>{
 });
 // 브라우저 자동재생 정책상 사용자 입력 전에는 재생이 막히므로, 첫 입력 시점에 타이틀 화면이면 재생을 시작한다
 window.addEventListener("pointerdown", ()=>{ if(state === "title") playBgm(); }, {once:true});
+
+// 훈련장 BGM — 플레이에 지장 없도록 조절 불가한 아주 작은 고정 볼륨으로만 튼다
+const TRAINING_BGM_VOLUME = 0.12;
+const trainingBgm = $("trainingBgm");
+trainingBgm.volume = TRAINING_BGM_VOLUME;
+function playTrainingBgm(){ trainingBgm.currentTime = 0; trainingBgm.play().catch(()=>{}); }
+function stopTrainingBgm(){ trainingBgm.pause(); trainingBgm.currentTime = 0; }

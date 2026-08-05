@@ -59,9 +59,11 @@ html, body{
 }
 .label--right{ text-align:right; }
 
+.hud__score{ min-width:96px; } /* 점수 자릿수가 늘어도 폭이 고정되어야 가운데 타이머 UI가 안 밀린다 */
 .hud__score .score{
   font-family:var(--serif); font-weight:800;
   font-size:28px; line-height:1.1;
+  font-variant-numeric:tabular-nums;
   color:var(--paper);
 }
 
@@ -93,6 +95,10 @@ html, body{
   background:var(--red);
   clip-path:polygon(50% 0%, 100% 20%, 78% 100%, 22% 100%, 0% 20%);
   box-shadow:0 0 8px rgba(224,69,58,.6);
+}
+.life-bar i.overheal{
+  background:var(--gold);
+  box-shadow:0 0 8px rgba(232,184,75,.65);
 }
 .life-bar i.off{
   background:rgba(237,228,211,.12);
@@ -162,6 +168,15 @@ html, body{
 .kicker{
   font-size:12px; letter-spacing:.28em; color:var(--paper-dim);
 }
+
+.loading-spinner{
+  width:40px; height:40px; margin-top:18px;
+  border:3px solid rgba(237,228,211,.18);
+  border-top-color:var(--gold);
+  border-radius:50%;
+  animation:loading-spin .8s linear infinite;
+}
+@keyframes loading-spin{ to{ transform:rotate(360deg); } }
 
 .brand{
   font-family:var(--serif); font-weight:800;
@@ -233,6 +248,32 @@ html, body{
   margin-top:10px;
   font-size:11px; color:var(--paper-dim);
 }
+
+.training-entry-btn{
+  position:absolute; right:32px; top:50%; transform:translateY(-50%);
+  font-size:20px; padding:18px 34px;
+  background:var(--ink-1); color:var(--gold);
+  border:1px solid var(--gold);
+}
+
+/* ── 훈련장 패널 ─────────────────────── */
+.training-panel{
+  position:absolute; right:18px; top:50%; transform:translateY(-100%);
+  margin-top:-90px;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  background:rgba(10,11,17,.85); border:1px solid rgba(237,228,211,.25);
+  border-radius:10px; padding:12px 18px;
+  font-size:12px;
+}
+.training-panel__row{ display:flex; align-items:center; gap:8px; }
+.training-panel select{
+  font-family:var(--sans); font-size:12px;
+  background:var(--ink-1); color:var(--paper);
+  border:1px solid rgba(237,228,211,.3); border-radius:5px;
+  padding:6px 8px;
+}
+.training-panel .btn{ padding:7px 16px; font-size:12px; letter-spacing:.08em; }
+.training-panel span{ min-width:16px; text-align:center; color:var(--paper-dim); }
 
 .grade{
   font-family:var(--serif); font-weight:800;
@@ -327,7 +368,6 @@ html, body{
   transition:opacity .15s ease, transform .15s ease;
 }
 .help-icon:hover::after{ opacity:1; transform:translateY(0); }
-
 /* ── 타이틀 배경음악 볼륨 ──────────── */
 .bgm-volume{
   position:absolute; bottom:16px; right:16px;
@@ -357,6 +397,35 @@ html, body{
 }
 .howto__close:hover{ color:var(--paper); }
 .howto .rules{ margin-top:14px; }
+
+.story-veil{
+  background:var(--ink-0);
+  backdrop-filter:none;
+}
+.story-text{
+  margin-top:18px;
+  max-width:560px;
+  font-family:var(--serif);
+  font-size:15px; line-height:2;
+  color:var(--paper);
+  text-align:center;
+}
+.story-text p{ margin-bottom:14px; min-height:1.4em; }
+.story-text p:last-child{ margin-bottom:0; }
+.story-skip{
+  position:absolute; right:22px; bottom:22px;
+  display:flex; align-items:center; gap:7px;
+  font-size:11px; color:var(--paper-dim);
+}
+.story-skip__sep{ opacity:.5; }
+.key-icon{
+  display:inline-flex; align-items:center; justify-content:center;
+  height:22px; padding:0 8px;
+  border:1px solid rgba(237,228,211,.35); border-radius:5px;
+  background:rgba(237,228,211,.06);
+  font-family:var(--sans); font-size:11px; font-weight:600;
+  color:var(--paper);
+}
 
 .pause-btn{
   position:absolute; bottom:16px; right:16px;

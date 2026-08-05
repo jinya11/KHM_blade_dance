@@ -28,7 +28,7 @@ function updateSwords(dt){
       s.hitSet.add(e);
       if(e.key === "boss"){ hitBoss(e, BOSS_ULT_DMG); continue; }
       if(e.key === "guardian") addText(e.x, e.y-e.r-10, "약점!", "#E8B84B", 19);
-      killEnemy(e, true, false, "gale");
+      hitOrKill(e, true, false, "gale", 2);
     }
   }
   swords = swords.filter(s => s.life < SWORD_LIFE && s.x>-40 && s.x<W+40 && s.y>-40 && s.y<H+40);
@@ -57,7 +57,7 @@ function galeLine(){
     if(!e.alive || e.hidden || Math.abs(e.y - y) > GALE_LINE_THICK + e.r) continue;
     if(e.key === "boss"){ hitBoss(e, BOSS_ULT_DMG); continue; }
     if(e.key === "guardian") addText(e.x, e.y-e.r-10, "약점!", "#E8B84B", 19);
-    killEnemy(e, true, true, "gale");
+    hitOrKill(e, true, true, "gale", 2);
   }
 }
 function galeNuke(){
@@ -72,10 +72,11 @@ function galeNuke(){
     if(e.key === "boss"){ hitBoss(e, BOSS_ULT_DMG); continue; }
     if(e.key === "guardian" && !e.guardDisarmed){
       e.guardDisarmed = true; e.stagger = GALE_GUARD_STUN;
+      e.slamWind = 0; e.spinT = 0; // 파방 순간 진행 중이던 내려찍기/회전베기 예비동작 취소
       addText(e.x, e.y-e.r-10, "파방!", "#E8B84B", 20);
       burst(e.x, e.y, "#35A88F", 12, 260);
       continue;
     }
-    killEnemy(e, true, true, "gale");
+    hitOrKill(e, true, true, "gale", 2);
   }
 }

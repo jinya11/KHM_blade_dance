@@ -47,8 +47,7 @@ function killBoss(e){
   sfx.boom();
   const type = BOSS_TYPES[e.type];
   if(type && type.onKilled) type.onKilled(e);
-  evoTarget[EVO_CATEGORIES[Math.floor(Math.random()*EVO_CATEGORIES.length)]]++;
-  trySpawnEvolved();
+  advanceEvolution();
   charges = Math.min(MAX_CHARGE, charges + BOSS_CHARGE_BONUS);
   score += BOSS_SCORE_BONUS;
   flash = Math.max(flash, .5);

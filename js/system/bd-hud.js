@@ -10,7 +10,8 @@ function syncHud(){
   el.charges.classList.toggle("gale", skillFamily === "gale");
   el.charges.classList.toggle("kwi", skillFamily === "kwi");
   const li = el.life.children;
-  for(let i=0;i<li.length;i++) li[i].className = i < player.hp ? "" : "off";
+  for(let i=0;i<MAX_HP;i++) li[i].className = i < player.hp ? "" : "off";
+  li[MAX_HP].className = player.overheal > 0 ? "overheal" : "overheal off";
   if(combo >= 2){
     el.combo.classList.add("on");
     el.comboNum.textContent = combo;

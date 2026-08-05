@@ -1,7 +1,9 @@
 "use strict";
 // 입력 처리 — 마우스/터치 좌표 해석, 대시 대상(적 or 빈 공간) 탐색, 대시 시작(startDash).
 let mouseX = W/2, mouseY = H/2; // 마우스 추적 이동(update)이 참조하는 최신 포인터 좌표
-cv.addEventListener("mousemove", e=>{
+// document에 붙여야 훈련장 패널처럼 캔버스 위에 겹쳐진 DOM 요소를 마우스가 지나갈 때도
+// 좌표 추적이 끊기지 않는다(캔버스 자체에 붙이면 패널 위에서 mousemove가 캔버스로 전달되지 않아 좌표가 그 직전 값에 멈춰버림)
+document.addEventListener("mousemove", e=>{
   const p = pointerAt(e); mouseX = p.x; mouseY = p.y;
   if(wheelUiOpen) wheelUiTimer = WHEEL_UI_IDLE_CLOSE; // 원형 UI 조작(마우스 이동) 시 자동 닫힘 타이머 초기화
 });
@@ -9,6 +11,13 @@ function pointerAt(e){
   const r = cv.getBoundingClientRect();
   const p = (e.touches && e.touches[0]) ? e.touches[0] : e;
   return {x:p.clientX - r.left, y:p.clientY - r.top};
+}
+/** 캔버스 좌표(x,y)가 훈련장 소환 패널 위에 있는지 — 마우스 추적 이동 억제용 */
+function isOverTrainingPanel(x, y){
+  const el = $("trainingPanel");
+  if(el.classList.contains("hide")) return false;
+  const cr = cv.getBoundingClientRect(), pr = el.getBoundingClientRect();
+  return x >= pr.left - cr.left && x <= pr.right - cr.left && y >= pr.top - cr.top && y <= pr.bottom - cr.top;
 }
 function findNearestEnemy(p){
   let best = null, bd = 1e9;
@@ -26,7 +35,7 @@ function onPress(e){
   if(player.dashing) return;
   if(player.cd > 0){
     if(player.quickRecover <= 0) return;
-    player.cd = 0; player.quickRecover = 0; player.blocked = false; // 방패 막힘 직후 빠른 재입력 — 페널티 없이 재돌진
+    player.cd = 0; player.cdTotal = 0; player.quickRecover = 0; // 방패 막힘 직후 빠른 재입력 — 페널티 없이 재돌진
     addText(player.x, player.y-40, "파훼!", "#DCE9F2", 19);
   }
   const best = findNearestEnemy(p);

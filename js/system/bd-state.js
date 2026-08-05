@@ -5,8 +5,8 @@ let mode = "normal";         // normal | infinite — startGame()이 설정, res
 let t = 0, timeLeft = ROUND_TIME;
 let score = 0, combo = 0, maxCombo = 0, kills = 0, dashCount = 0, hitDashes = 0;
 let charges = 0, comboTimer = 0, shake = 0, slowmo = 0, flash = 0, paused = false;
-const player = {x:0,y:0,hp:MAX_HP,invuln:0,cd:0,dashing:false,t:0,dur:0,fx:0,fy:0,tx:0,ty:0,dx:1,dy:0,
-                killed:false, isReposition:false, ult:false, facing:0, hitSet:null, quickRecover:0, blocked:false};
+const player = {x:0,y:0,hp:MAX_HP,overheal:0,marked:0,invuln:0,cd:0,cdTotal:0,dashing:false,t:0,dur:0,fx:0,fy:0,tx:0,ty:0,dx:1,dy:0,
+                killed:false, isReposition:false, ult:false, facing:0, hitSet:null, quickRecover:0};
 let enemies = [], parts = [], texts = [], slashes = [], trail = [];
 let bullets = [], heals = []; // 저격수 탄환 · 회복충 드롭
 let beams = []; // 충전병이 발사하는 가로 빔
@@ -20,8 +20,15 @@ let cage = null;     // 활성화된 감금 벽: {cx,cy,half,walls:{top,bottom,l
 let bossNoAttack = 0; // 보스가 피격당한 직후: 이 시간 동안은 어떤 패턴의 공격도 성립하지 않는다
 let stamina = MAX_STAMINA, staminaLock = 0, evadeStreak = 0; // 기력 · 이동 불가 타이머 · 처치 없는 연속 회피 횟수
 let idleTime = 0; // 대시하지 않고 가만히 있은 시간(기력 자동 회복 조건)
-let evoTarget = {slime:0, gunner:0, guardian:0}; // 무한 모드: 누적되는 진화개체 목표 마릿수
-let evoTimer = 0; // 다음 시간 기반 진화 등장까지 남은 시간
+let evoTarget = {slime:0, gunner:0, guardian:0, bomber:0, shotgun:0, charger:0}; // 무한 모드: 범주별 현재 해금된 진화 단계(0~5)
+let evoTimer = 0; // 다음 시간 기반 진화 단계 상승까지 남은 시간
+let acidPools = [];   // 먹덩이 2단계: 사후 산성웅덩이
+let slowTrails = [];  // 먹덩이 4단계: 점착돌진 슬로우 트레일
+let guardWalls = [];  // 방패병 3단계: 임시 이동벽
+let delayedBlasts = []; // 폭탄충 4/5단계: 지연 폭발(예고 포함)
+let dummyRespawns = []; // 훈련장 허수아비 리스폰 대기열
+let evoBanners = []; // 화면 중앙 상단에 표시되는 진화 알림 테롭
+let playerSlow = 0;    // 슬로우 트레일에 의한 이동속도 저하 잔여시간
 
 // 귀풍참 — 우클릭으로 발동되는 스킬군을 질풍참/귀풍참 중에서 고르는 시스템
 let skillFamily = "gale";  // "gale"(질풍참) | "kwi"(귀풍참) — 우클릭 시 어느 쪽이 나갈지
@@ -40,10 +47,11 @@ function reset(){
   bossActive = false; bossTimer = rnd(BOSS_INTERVAL_MIN, BOSS_INTERVAL_MAX);
   bossZones = []; cage = null; bossNoAttack = 0;
   stamina = MAX_STAMINA; staminaLock = 0; evadeStreak = 0; idleTime = 0;
-  evoTarget = {slime:0, gunner:0, guardian:0};
+  evoTarget = {slime:0, gunner:0, guardian:0, bomber:0, shotgun:0, charger:0};
   evoTimer = rnd(EVO_TIME_MIN, EVO_TIME_MAX);
+  acidPools = []; slowTrails = []; guardWalls = []; delayedBlasts = []; dummyRespawns = []; evoBanners = []; playerSlow = 0;
   skillFamily = "gale"; skillSwapCd = 0; wheelUiOpen = false; wheelUiTimer = 0;
   recallMark = null; vortices = [];
-  Object.assign(player,{x:W/2,y:H/2,hp:MAX_HP,invuln:0,cd:0,dashing:false,killed:false,isReposition:false,ult:false,facing:0,quickRecover:0,blocked:false});
+  Object.assign(player,{x:W/2,y:H/2,hp:MAX_HP,overheal:0,marked:0,invuln:0,cd:0,cdTotal:0,dashing:false,killed:false,isReposition:false,ult:false,facing:0,quickRecover:0});
   syncHud();
 }

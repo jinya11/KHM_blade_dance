@@ -6,10 +6,80 @@ function startGame(newMode){
   $("titleVeil").classList.add("hide");
   $("overVeil").classList.add("hide");
   $("pauseVeil").classList.add("hide");
+  $("trainingPanel").classList.add("hide");
   $("hudPanel").classList.remove("hide");
   state = "play";
   if(ac() && AC.state === "suspended") AC.resume();
   stopBgm();
+}
+/** 훈련장 — 자동 스폰·타이머 없이 허수아비 3마리를 두고 적 소환·스택 조절로 자유롭게 연습한다. */
+function enterTraining(){
+  mode = "training";
+  resize(); reset();
+  spawnDummies();
+  $("titleVeil").classList.add("hide");
+  $("hudPanel").classList.remove("hide");
+  $("trainingPanel").classList.remove("hide");
+  updateTrainingLabels();
+  updateTrainSpawnStageOptions();
+  state = "play";
+  if(ac() && AC.state === "suspended") AC.resume();
+  stopBgm();
+  playTrainingBgm();
+}
+function exitTraining(){
+  $("trainingPanel").classList.add("hide");
+  stopTrainingBgm();
+  goHome();
+}
+function updateTrainingLabels(){
+  $("trainComboVal").textContent = combo;
+  $("trainChargeVal").textContent = charges;
+}
+for(const k of TRAINING_SPAWNABLE){
+  const opt = document.createElement("option");
+  opt.value = k; opt.textContent = TYPES[k].name;
+  $("trainSpawnKey").appendChild(opt);
+}
+// 진화 단계가 없는 적(질풍조·회복충)은 단계 선택 UI 자체를 숨기고, 있는 적은 실제 최대 단계까지만 보여준다(방패병은 4단계까지)
+function updateTrainSpawnStageOptions(){
+  const key = $("trainSpawnKey").value, sel = $("trainSpawnStage");
+  const has = EVO_CATEGORIES.includes(key);
+  sel.classList.toggle("hide", !has);
+  sel.innerHTML = "";
+  const opt0 = document.createElement("option");
+  opt0.value = "0"; opt0.textContent = "기본";
+  sel.appendChild(opt0);
+  if(has){
+    const max = evoMaxStage(key);
+    for(let s=1; s<=max; s++){
+      const opt = document.createElement("option");
+      opt.value = String(s); opt.textContent = s+"단계";
+      sel.appendChild(opt);
+    }
+  }
+}
+$("trainSpawnKey").addEventListener("change", updateTrainSpawnStageOptions);
+updateTrainSpawnStageOptions();
+$("trainingBtn").addEventListener("click", enterTraining);
+$("trainExitBtn").addEventListener("click", exitTraining);
+$("trainSpawnBtn").addEventListener("click", ()=>{
+  const key = $("trainSpawnKey").value;
+  const stage = Number($("trainSpawnStage").value);
+  const a = rnd(0,6.283), r = 160;
+  spawn(key, stage || undefined, {x:clamp(player.x+Math.cos(a)*r,30,W-30), y:clamp(player.y+Math.sin(a)*r,30,H-30)});
+});
+$("trainComboPlus").addEventListener("click", ()=>{ combo++; comboTimer = COMBO_WINDOW; syncHud(); updateTrainingLabels(); });
+$("trainComboMinus").addEventListener("click", ()=>{ combo = Math.max(0, combo-1); syncHud(); updateTrainingLabels(); });
+$("trainChargePlus").addEventListener("click", ()=>{ charges = Math.min(MAX_CHARGE, charges+1); syncHud(); updateTrainingLabels(); });
+$("trainChargeMinus").addEventListener("click", ()=>{ charges = Math.max(0, charges-1); syncHud(); updateTrainingLabels(); });
+const LOADING_DELAY = 900; // 로딩 화면 표시 시간(ms)
+function beginLoading(newMode){
+  $("titleVeil").classList.add("hide");
+  $("overVeil").classList.add("hide");
+  $("loadingVeil").classList.remove("hide");
+  stopBgm();
+  setTimeout(()=>{ $("loadingVeil").classList.add("hide"); startGame(newMode); }, LOADING_DELAY);
 }
 function gameOver(reason){
   state = "over"; sfx.end();
@@ -48,23 +118,66 @@ $("helpIconBtn").addEventListener("click", openHowto);
 $("howtoClose").addEventListener("click", closeHowto);
 $("howtoVeil").addEventListener("click", e=>{ if(e.target.id === "howtoVeil") closeHowto(); });
 
+// 스토리 화면 — 홈페이지 진입 시 가장 먼저 표시, ESC/Enter로 닫으면 원래 진입 절차(하우투→타이틀)로 이어진다
+const STORY_LINES = [
+  "바람이 지나간 자리엔, 아무것도 남지 않는다.",
+  "고향은 어느 밤 흩어졌고, 그는 검 한 자루만 쥔 채 남겨졌다.",
+  "이제 그의 눈에 보이는 건 흐릿한 형체뿐 — 사람인지, 바람인지, 그 자신의 미련인지도 알 수 없다.",
+  "멈추면 삼켜진다. 그래서 그는 벤다.",
+];
+const STORY_CHAR_MS = 45, STORY_LINE_GAP_MS = 550;
+let storyTimer = null;
+function startStory(){
+  const el = $("storyText");
+  el.innerHTML = "";
+  let li = 0, ci = 0, p = null;
+  (function tick(){
+    if(li >= STORY_LINES.length) return;
+    if(!p){ p = document.createElement("p"); el.appendChild(p); }
+    const line = STORY_LINES[li];
+    if(ci < line.length){
+      p.textContent += line[ci]; ci++;
+      storyTimer = setTimeout(tick, STORY_CHAR_MS);
+    } else {
+      li++; ci = 0; p = null;
+      storyTimer = setTimeout(tick, STORY_LINE_GAP_MS);
+    }
+  })();
+}
+function closeStory(){
+  clearTimeout(storyTimer);
+  $("storyVeil").classList.add("hide");
+  if(localStorage.getItem(HOWTO_KEY) !== "1") openHowto();
+}
+
 function togglePause(){
-  if(state !== "play") return;
+  if(state !== "play" || mode === "training") return; // 훈련장은 재시작할 이유가 없어 일시정지 메뉴 자체를 띄우지 않는다
   paused = !paused;
   $("pauseVeil").classList.toggle("hide", !paused);
+}
+/** 일시정지 메뉴에서 타이틀로 돌아가기 — 게임 도중 이탈이므로 점수는 기록하지 않는다. */
+function quitToTitle(){
+  paused = false;
+  $("pauseVeil").classList.add("hide");
+  goHome();
 }
 $("pauseBtn").addEventListener("click", togglePause);
 $("resumeBtn").addEventListener("click", togglePause);
 $("pauseRestartBtn").addEventListener("click", ()=>startGame());
+$("pauseTitleBtn").addEventListener("click", quitToTitle);
 
-$("startNormalBtn").addEventListener("click", ()=>startGame("normal"));
-$("startInfiniteBtn").addEventListener("click", ()=>startGame("infinite"));
-$("retryBtn").addEventListener("click", ()=>startGame());
+$("startNormalBtn").addEventListener("click", ()=>beginLoading("normal"));
+$("startInfiniteBtn").addEventListener("click", ()=>beginLoading("infinite"));
+$("retryBtn").addEventListener("click", ()=>beginLoading());
 $("homeBtn").addEventListener("click", goHome);
 window.addEventListener("keydown", e=>{
+  if(!$("storyVeil").classList.contains("hide")){
+    if(e.code === "Escape" || e.code === "Enter"){ e.preventDefault(); closeStory(); }
+    return;
+  }
   if(e.code === "Escape"){ togglePause(); return; }
   if((e.code==="Space"||e.code==="Enter") && state!=="play" && $("howtoVeil").classList.contains("hide")){
-    e.preventDefault(); startGame();
+    e.preventDefault(); beginLoading();
   }
 });
 
@@ -80,5 +193,7 @@ resize();
 player.x = W/2; player.y = H/2;
 syncHud(); syncTimer();
 renderScoreHistory();
-if(localStorage.getItem(HOWTO_KEY) !== "1") openHowto();
+// 스토리 화면이 항상 가장 먼저 뜨고, 닫힐 때(closeStory) 처음 방문이면 이어서 하우투를 띄운다
+startStory();
+playBgm(); // 타이틀 화면 진입 시 바로 재생 시도(브라우저 자동재생 정책상 실제 소리는 첫 입력 시 시작됨)
 requestAnimationFrame(loop);

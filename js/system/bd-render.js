@@ -25,6 +25,30 @@ function drawWinds(){
     ctx.restore(); ctx.shadowBlur = 0;
   }
 }
+// 충전병 충전 예고 — 빔이 지나갈 경로를 미리 흐리게 표시하고, 머리 위에 펄스 마름모로 충전 진행을 알린다
+function drawChargerTelegraphs(){
+  for(const e of enemies){
+    if(!e.alive || e.key !== "charger" || e.chargerState !== "charge") continue;
+    const total = e.evoStage === 4 ? CHARGER_CHARGE_TIME*EVO_CHARGER_FAST_CHARGE_MULT : CHARGER_CHARGE_TIME;
+    const k = 1 - e.chargerT/total;
+    ctx.save(); ctx.globalAlpha = .12 + .22*k; ctx.fillStyle = "#4FC3F7";
+    const row = (pos, vertical, thick) => {
+      thick = thick || CHARGER_BEAM_THICK;
+      if(vertical) ctx.fillRect(pos-thick/2, 0, thick, H);
+      else ctx.fillRect(0, pos-thick/2, W, thick);
+    };
+    if(e.evoStage === 2){ row(e.y,false); row(e.x,true); }
+    else if(e.evoStage === 3) row(e.trackY===undefined ? e.y : e.trackY, false);
+    else if(e.evoStage === 4){ row(e.y-EVO_CHARGER_DUAL_GAP/2,false); row(e.y+EVO_CHARGER_DUAL_GAP/2,false); }
+    else row(e.y, false, e.evoStage===1 ? EVO_CHARGER_WIDE_THICK : undefined);
+    ctx.restore();
+    const pulse = .6 + .4*Math.sin(t*10);
+    ctx.save(); ctx.translate(e.x, e.y-e.r-20); ctx.rotate(Math.PI/4);
+    ctx.fillStyle = "rgba(79,195,247,"+(0.4+0.5*k*pulse).toFixed(2)+")";
+    ctx.fillRect(-6,-6,12,12);
+    ctx.restore();
+  }
+}
 // 귀환식 마킹 지점 — 펄스링 + 실제 내려찍기 판정 범위 + 순간이동까지 남은 시간을 나타내는 진행 링
 function drawRecallMark(){
   if(!recallMark) return;
@@ -78,20 +102,30 @@ function drawWheelUi(){
   ctx.beginPath(); ctx.arc(cx,cy,R+8,-1.5708,-1.5708+6.283*(wheelUiTimer/WHEEL_UI_IDLE_CLOSE)); ctx.stroke();
   ctx.restore();
 }
+const trainRoomImg = new Image();
+trainRoomImg.src = "img/training-room-1920-x-1080-v0-9xp0f8sikrub1.webp";
 function draw(){
   ctx.clearRect(0,0,W,H);
   const sx = shake ? rnd(-shake,shake)*.4 : 0, sy = shake ? rnd(-shake,shake)*.4 : 0;
   ctx.save(); ctx.translate(sx,sy);
 
-  // 배경: 먹 번짐 + 한지 결
-  const g = ctx.createRadialGradient(W/2,H/2,40,W/2,H/2,Math.max(W,H)*.75);
-  g.addColorStop(0,"#171C2B"); g.addColorStop(1,"#0A0B11");
-  ctx.fillStyle = g; ctx.fillRect(-20,-20,W+40,H+40);
-  ctx.strokeStyle = "rgba(237,228,211,.045)"; ctx.lineWidth = 1;
-  for(let i=0;i<H;i+=44){ ctx.beginPath(); ctx.moveTo(0,i+.5); ctx.lineTo(W,i+.5); ctx.stroke(); }
-  // 원형 붓 자국
-  ctx.strokeStyle = "rgba(237,228,211,.05)"; ctx.lineWidth = 22;
-  ctx.beginPath(); ctx.arc(W/2,H/2,Math.min(W,H)*.36,.5,5.1); ctx.stroke();
+  if(mode === "training" && trainRoomImg.complete && trainRoomImg.naturalWidth){
+    // 훈련장 전용 배경 — 이미지를 화면에 꽉 차게(cover) 그리고, 적/UI 가독성을 위해 살짝 어둡게 톤다운
+    const iw = trainRoomImg.naturalWidth, ih = trainRoomImg.naturalHeight;
+    const scale = Math.max(W/iw, H/ih), dw = iw*scale, dh = ih*scale;
+    ctx.drawImage(trainRoomImg, (W-dw)/2, (H-dh)/2, dw, dh);
+    ctx.fillStyle = "rgba(10,11,17,.45)"; ctx.fillRect(-20,-20,W+40,H+40);
+  } else {
+    // 배경: 먹 번짐 + 한지 결
+    const g = ctx.createRadialGradient(W/2,H/2,40,W/2,H/2,Math.max(W,H)*.75);
+    g.addColorStop(0,"#171C2B"); g.addColorStop(1,"#0A0B11");
+    ctx.fillStyle = g; ctx.fillRect(-20,-20,W+40,H+40);
+    ctx.strokeStyle = "rgba(237,228,211,.045)"; ctx.lineWidth = 1;
+    for(let i=0;i<H;i+=44){ ctx.beginPath(); ctx.moveTo(0,i+.5); ctx.lineTo(W,i+.5); ctx.stroke(); }
+    // 원형 붓 자국
+    ctx.strokeStyle = "rgba(237,228,211,.05)"; ctx.lineWidth = 22;
+    ctx.beginPath(); ctx.arc(W/2,H/2,Math.min(W,H)*.36,.5,5.1); ctx.stroke();
+  }
 
   if(flash > 0){ ctx.fillStyle = "rgba(232,184,75,"+(flash*.20).toFixed(3)+")"; ctx.fillRect(0,0,W,H); }
 
@@ -150,6 +184,12 @@ function draw(){
       ctx.lineTo(-R*.7,R*.55); ctx.lineTo(-R*.7,-R*.55);
       ctx.closePath(); ctx.fill();
       ctx.fillStyle = "#0B0C12"; ctx.beginPath(); ctx.arc(-R*.1,0,R*.28,0,6.283); ctx.fill();
+      if(e.snipeWind > 0){
+        // 3단계 저격샷 예고 — 조준 방향으로 레이저 라인 표시
+        const pulse = .5 + .4*Math.sin(t*30);
+        ctx.strokeStyle = "rgba(224,69,58,"+pulse.toFixed(2)+")"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(2000,0); ctx.stroke();
+      }
     } else if(e.key === "healer"){
       ctx.fillStyle = e.color;
       ctx.beginPath(); ctx.arc(0,0,R,0,6.283); ctx.fill();
@@ -185,13 +225,25 @@ function draw(){
       ctx.fillStyle = "rgba(11,12,18,.55)";
       ctx.beginPath(); ctx.arc(-R*.28,-R*.15,2.6,0,6.283); ctx.arc(R*.28,-R*.15,2.6,0,6.283); ctx.fill();
     }
+    if(e.hitFlash > 0){
+      // 다타형(5단계) 피격 플래시 — 처치는 안 됐지만 맞았다는 즉각적 피드백
+      ctx.globalAlpha = Math.min(1, e.hitFlash/.15)*.6;
+      ctx.fillStyle = "#FFFFFF";
+      ctx.beginPath(); ctx.arc(0,0,R,0,6.283); ctx.fill();
+    }
     ctx.restore(); ctx.globalAlpha = 1;
-    if(e.evo){
-      // 진화개체 표식 — 회전 영향 없는 고정 X 마크
+    if(e.evoStage > 0){
+      // 진화 단계 표식 — 단계 수만큼 점으로 표시, 5단계는 아래에 체력바 추가
       ctx.save(); ctx.translate(e.x, e.y-e.r-14);
-      ctx.strokeStyle = "#E8B84B"; ctx.lineWidth = 3; ctx.lineCap = "round";
-      ctx.beginPath(); ctx.moveTo(-5,-5); ctx.lineTo(5,5); ctx.moveTo(5,-5); ctx.lineTo(-5,5); ctx.stroke();
+      ctx.fillStyle = "#E8B84B";
+      for(let i=0;i<e.evoStage;i++){ ctx.beginPath(); ctx.arc(-10+i*5, 0, 2.1, 0, 6.283); ctx.fill(); }
       ctx.restore();
+      if(e.maxHp > 1){
+        ctx.save(); ctx.translate(e.x-14, e.y-e.r-23);
+        ctx.fillStyle = "rgba(237,228,211,.2)"; ctx.fillRect(0,0,28,4);
+        ctx.fillStyle = "#E0453A"; ctx.fillRect(0,0,28*(e.hp/e.maxHp),4);
+        ctx.restore();
+      }
     }
     if(e.key === "guardian" && e.slamWind > 0){
       // 내려찍기 예비동작 경고 — 실제 타격 범위를 처음부터 고정으로 보여주고 점멸
@@ -201,6 +253,7 @@ function draw(){
     }
   }
 
+  drawChargerTelegraphs();
   drawHazards();
   drawWinds();
   drawSwords();
@@ -212,7 +265,7 @@ function draw(){
     if(p.ring){
       ctx.strokeStyle = "rgba(232,184,75,"+(k*.8).toFixed(3)+")";
       ctx.lineWidth = 4*k+1;
-      ctx.beginPath(); ctx.arc(p.x,p.y,118*(1-k*k),0,6.283); ctx.stroke();
+      ctx.beginPath(); ctx.arc(p.x,p.y,(p.radius||118)*(1-k*k),0,6.283); ctx.stroke();
     }else{
       ctx.globalAlpha = k; ctx.fillStyle = p.color;
       ctx.beginPath(); ctx.arc(p.x,p.y,p.r*k,0,6.283); ctx.fill(); ctx.globalAlpha = 1;
@@ -231,6 +284,12 @@ function draw(){
     } else if(!player.dashing){
       ctx.strokeStyle = "rgba(220,233,242,.35)"; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.arc(0,0,PLAYER_R+9,0,6.283); ctx.stroke();
+    }
+    if(player.marked > 0){
+      // 저격수 5단계 표식 — 다음 피격 시 추가 피해
+      const pulse = .5 + .4*Math.sin(t*16);
+      ctx.strokeStyle = "rgba(139,95,191,"+pulse.toFixed(2)+")"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0,0,PLAYER_R+15,0,6.283); ctx.stroke();
     }
     ctx.globalAlpha = blink ? .35 : 1;
     ctx.rotate(player.facing);
@@ -267,4 +326,22 @@ function draw(){
   }
   drawWheelUi();
   ctx.restore();
+  drawEvoBanners();
+}
+// 진화 알림 테롭 — 화면 중앙 상단(타이머 UI 아래)에 고정 표시(화면 흔들림 영향 안 받음)
+function drawEvoBanners(){
+  evoBanners.forEach((b, i) => {
+    const k = b.life/b.dur;
+    const fade = k < .1 ? k/.1 : k > .85 ? (1-k)/.15 : 1;
+    const y = 74 + i*34;
+    ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, fade));
+    ctx.fillStyle = "rgba(10,11,17,.7)";
+    ctx.fillRect(W/2-160, y-16, 320, 32);
+    ctx.strokeStyle = "#E8B84B"; ctx.lineWidth = 1; ctx.strokeRect(W/2-160, y-16, 320, 32);
+    ctx.textAlign = "center";
+    ctx.font = "700 16px 'Nanum Myeongjo',serif";
+    ctx.fillStyle = "#E8B84B";
+    ctx.fillText(b.text, W/2, y+6);
+    ctx.restore();
+  });
 }
