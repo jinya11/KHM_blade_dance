@@ -1,3 +1,21 @@
+Ai 사용 및 소스
+
 canva: 사이트 로고 이미지 프로토타입 생성
-니너 비니니: canva를 통해 생성된 프로토타입을 발전
+나노 비나나: canva를 통해 생성된 프로토타입을 발전
 클로드 코드: JAVA SCRIPT 코딩 진행.
+
+Meshy AI: 3d 모델링 AI를 통해 캐릭터의 도입 여부를 연구.
+
+suno AI: 타이틀 화면과 훈련장에서 사용될 음악 제작.
+타이틀 곡의 경우 Suno를 통해 제작한 것을 클로드를 통해 음낮이를 조절한 후 사용.
+
+타이틀 화면 사용 프롬프트:
+Traditional East Asian folk ballad with sparse percussion and bamboo flute, slow swaying pulse and restrained low-range melody; verse opens with wind and wood-toned imagery, pre-chorus tightens into a quiet march, chorus stays minimal and chant-like with room to breathe, Breathy close-mic vocal, low harmony doubles on key lines, subtle room reverb, bamboo chimes and reversed wind swells between phrases, Warm, earthy, intimate mix
+
+훈련장 사용 프롬프트:
+Traditional East Asian folk ballad with sparse percussion and bamboo flute, slow swaying pulse and restrained low-range melody; verse opens with wind and wood-toned imagery, pre-chorus tightens into a quiet march, chorus stays minimal and chant-like with room to breathe, Breathy close-mic vocal, low harmony doubles on key lines, subtle room reverb, bamboo chimes and reversed wind swells between phrases, Warm, earthy, intimate mix
+
+
+소스 출처 
+훈련장 배경 화면:
+https://www.reddit.com/r/wallpaper/comments/179y9q0/training_room_1920_x_1080/
